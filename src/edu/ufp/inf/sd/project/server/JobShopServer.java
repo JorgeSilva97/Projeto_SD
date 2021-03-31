@@ -38,7 +38,7 @@ public class JobShopServer {
 
     public static void main(String[] args) {
         if (args != null && args.length < 3) {
-            System.err.println("usage: java [options] edu.ufp.sd._01_helloworld.server.HelloWorldServer <rmi_registry_ip> <rmi_registry_port> <service_name>");
+            System.err.println("usage: java [options] edu.ufp.sd.PROJETO.server.ProjetoSERVER <rmi_registry_ip> <rmi_registry_port> <service_name>");
             System.exit(-1);
         } else {
             //1. ============ Create Servant ============

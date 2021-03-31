@@ -38,7 +38,7 @@ public class JobShopClient {
 
     public static void main(String[] args) {
         if (args != null && args.length < 2) {
-            System.err.println("usage: java [options] edu.ufp.sd.inf.rmi._01_helloworld.server.HelloWorldClient <rmi_registry_ip> <rmi_registry_port> <service_name>");
+            System.err.println("usage: java [options] edu.ufp.sd.inf.rmi.PROJETO.server.Project <rmi_registry_ip> <rmi_registry_port> <service_name>");
             System.exit(-1);
         } else {
             //1. ============ Setup client RMI context ============
