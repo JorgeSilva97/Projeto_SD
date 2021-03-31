@@ -1,5 +1,7 @@
 package edu.ufp.inf.sd.project.server.login;
 
+import edu.ufp.inf.sd.project.server.JobShopImpl;
+
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
@@ -8,19 +10,19 @@ public class JobShopSessionImpl extends UnicastRemoteObject implements JobShopSe
 {
 
 
-    private JobShopFactoryImpl digLibFactory;
+    private JobShopImpl jobShopImpl;
     private String uname;
 
-    public JobShopSessionImpl(JobShopFactoryImpl digLibFactory, String uname) throws RemoteException {
+    public JobShopSessionImpl(JobShopImpl jobShopImpl, String uname) throws RemoteException {
         super();
-        this.digLibFactory = digLibFactory;
+        this.jobShopImpl = jobShopImpl;
         this.uname = uname;
     }
 
     @Override
     public void logout() throws RemoteException
     {
-        digLibFactory.remove(this.uname);
+        jobShopImpl.remove(uname);
     }
 
 
