@@ -57,5 +57,12 @@ public class DBMockup {
 
     }
 
-
+    public User getUser(String uname){
+        for (User usr : this.users){
+            if(usr.getUname().equals(uname)){
+                return usr;
+            }
+        }
+        return null;
+    }
 }

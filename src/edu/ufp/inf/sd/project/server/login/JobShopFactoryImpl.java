@@ -3,12 +3,14 @@ package edu.ufp.inf.sd.project.server.login;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class JobShopFactoryImpl extends UnicastRemoteObject implements JobShopFactoryRI
 {
 
     private DBMockup db;
-    private HashMap<String, JobShopSessionRI> sessions;
+    private HashMap<String, JobShopSessionImpl> sessions;
 
     public JobShopFactoryImpl() throws RemoteException
     {
@@ -23,9 +25,12 @@ public class JobShopFactoryImpl extends UnicastRemoteObject implements JobShopFa
         if (!db.exists(uname, pword))
         {
             db.register(uname, pword);
+            Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Utilizador {0}, registado com sucesso", uname);
             return true;
+        }else{
+            Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Error, username already in use");
+            return false;
         }
-        return false;
     }
 
     @Override
@@ -33,25 +38,26 @@ public class JobShopFactoryImpl extends UnicastRemoteObject implements JobShopFa
     {
         if (db.exists(uname, pword))
         {
-            if (!this.sessions.containsKey(uname))
+            Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Sessão iniciada com sucesso!");
+            JobShopSessionImpl jobShopSession = sessions.get(uname);
+            if (jobShopSession == null)
             {
-                JobShopSessionRI jobShopSessionRI = new JobShopSessionImpl(this, uname);
-                this.sessions.put(uname, jobShopSessionRI);
-                return jobShopSessionRI;
+                jobShopSession = new JobShopSessionImpl(db.getUser(uname), db);
+                this.sessions.put(uname, jobShopSession);
+                return jobShopSession;
             }
-            else
-                return this.sessions.get(uname);
+        } else {
+            this.register(uname, pword);
+            JobShopSessionImpl jobShopSession = new JobShopSessionImpl(db.getUser(uname), db);
+            this.sessions.put(uname, jobShopSession);
+            return jobShopSession;
         }
         return null;
     }
 
-    public void remove (String uname)
-    {
-        this.sessions.remove(uname);
+    public void removeSession(String name){
+        this.sessions.remove(name);
+        //imprimir hash
     }
 
-    public DBMockup getDb()
-    {
-        return this.db;
-    }
 }

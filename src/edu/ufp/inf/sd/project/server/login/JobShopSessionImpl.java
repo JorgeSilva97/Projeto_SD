@@ -2,30 +2,30 @@ package edu.ufp.inf.sd.project.server.login;
 
 import edu.ufp.inf.sd.project.server.JobShopImpl;
 
+import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
 
-public class JobShopSessionImpl extends UnicastRemoteObject implements JobShopSessionRI
+public class JobShopSessionImpl implements JobShopSessionRI
 {
 
+    DBMockup dbMockup;
+    User client;
 
-    private JobShopImpl jobShopImpl;
-    private String uname;
-
-    public JobShopSessionImpl(JobShopImpl jobShopImpl, String uname) throws RemoteException {
-        super();
-        this.jobShopImpl = jobShopImpl;
-        this.uname = uname;
+    public JobShopSessionImpl(User client, DBMockup dbMockup){
+        //Export client
+        try {
+            Remote exportObject = java.rmi.server.UnicastRemoteObject.exportObject(this, 0);
+            this.dbMockup = dbMockup;
+            this.client = client;
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
-    public void logout() throws RemoteException
-    {
-        jobShopImpl.remove(uname);
+    public void logout(JobShopFactoryRI jobShopFactoryRI) throws RemoteException {
+        jobShopFactoryRI.removeSession(this.client.getUname());
     }
-
-
-
-
 }
