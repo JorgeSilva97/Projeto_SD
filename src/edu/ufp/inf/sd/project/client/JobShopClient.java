@@ -1,6 +1,7 @@
 package edu.ufp.inf.sd.project.client;
 
 import edu.ufp.inf.sd.project.server.JobShopRI;
+import edu.ufp.inf.sd.project.server.login.JobShopSessionRI;
 import edu.ufp.inf.sd.project.util.geneticalgorithm.CrossoverStrategies;
 import edu.ufp.inf.sd.project.util.geneticalgorithm.GeneticAlgorithmJSSP;
 import edu.ufp.inf.sd.project.util.tabusearch.TabuSearchJSSP;
@@ -73,6 +74,7 @@ public class JobShopClient {
                 //Get service url (including servicename)
                 String serviceUrl = contextRMI.getServicesUrl(0);
                 Logger.getLogger(this.getClass().getName()).log(Level.INFO, "going MAIL_TO_ADDR lookup service @ {0}", serviceUrl);
+
                 
                 //============ Get proxy MAIL_TO_ADDR HelloWorld service ============
                 jobShopRI = (JobShopRI) registry.lookup(serviceUrl);
@@ -105,6 +107,21 @@ public class JobShopClient {
                     new Object[]{jsspInstancePath,resultsQueue});
             GeneticAlgorithmJSSP ga = new GeneticAlgorithmJSSP(jsspInstancePath, queue, strategy);
             ga.run();
+
+            this.jobShopRI.register("jorge", "ufp");
+
+            JobShopSessionRI jobShopSessionRI = this.jobShopRI.login("jorge", "ufp");
+
+            if (jobShopSessionRI != null)
+            {
+                System.out.println("------------------>>>>>>>> ENTRE");
+
+            }
+            System.out.println("------------SAI!!!!!!!!");
+            System.out.println(jobShopSessionRI);
+
+
+            Logger.getLogger(this.getClass().getName()).log(Level.INFO, "going MAIL_TO_ADDR finish, GOODBYE. ;)");
 
         } catch (RemoteException ex) {
             Logger.getLogger(this.getClass().getName()).log(Level.SEVERE, null, ex);

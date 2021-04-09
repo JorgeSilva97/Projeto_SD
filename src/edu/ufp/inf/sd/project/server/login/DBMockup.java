@@ -8,7 +8,8 @@ import java.util.ArrayList;
  * @author rmoreira
  *
  */
-public class DBMockup {
+public class DBMockup
+{
 
     //private final ArrayList<Book> books;// = new ArrayList();
     private final ArrayList<User> users;// = new ArrayList();
