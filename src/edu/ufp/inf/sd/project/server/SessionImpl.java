@@ -6,23 +6,23 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
-public class JobShopSessionImpl extends UnicastRemoteObject implements JobShopSessionRI
+public class SessionImpl extends UnicastRemoteObject implements SessionRI
 {
 
 
-    private JobShopImpl jobShopImpl;
+    private FactoryImpl factoryImpl;
 
-    public JobShopSessionImpl(JobShopImpl jobShopImpl, String uname) throws RemoteException {
+    public SessionImpl(FactoryImpl factoryImpl, String uname) throws RemoteException {
         super();
-        this.jobShopImpl = jobShopImpl;
+        this.factoryImpl = factoryImpl;
     }
 
     @Override
     public void logout(String uname) throws RemoteException
     {
-        if (this.jobShopImpl.getSessions().containsKey(uname))
+        if (this.factoryImpl.getSessions().containsKey(uname))
         {
-            this.jobShopImpl.getSessions().remove(uname);
+            this.factoryImpl.getSessions().remove(uname);
             Logger.getLogger(this.getClass().getName()).log(Level.INFO, "LOGOUT efetuado pelo Utilizador @ {0}", uname);
         }
     }

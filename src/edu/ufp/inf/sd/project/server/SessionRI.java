@@ -4,7 +4,7 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 
 
-public interface JobShopSessionRI extends Remote
+public interface SessionRI extends Remote
 {
     public void logout(String uname) throws RemoteException;
 }

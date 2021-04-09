@@ -9,12 +9,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
-public class JobShopImpl extends UnicastRemoteObject implements JobShopRI {
+public class FactoryImpl extends UnicastRemoteObject implements FactoryRI {
 
     private DBMockup db;
-    private HashMap<String, JobShopSessionRI> sessions;
+    private HashMap<String, SessionRI> sessions;
 
-    public JobShopImpl() throws RemoteException
+    public FactoryImpl() throws RemoteException
     {
         super();
         db = new DBMockup();
@@ -47,16 +47,16 @@ public class JobShopImpl extends UnicastRemoteObject implements JobShopRI {
     }
 
     @Override
-    public JobShopSessionRI login(String uname, String pword) throws RemoteException
+    public SessionRI login(String uname, String pword) throws RemoteException
     {
         if (db.exists(uname, pword))
         {
             if (!this.sessions.containsKey(uname))
             {
                 Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Sessão iniciada com sucesso!");
-                JobShopSessionRI jobShopSessionRI = new JobShopSessionImpl(this, uname);
-                this.sessions.put(uname, jobShopSessionRI);
-                return jobShopSessionRI;
+                SessionRI sessionRI = new SessionImpl(this, uname);
+                this.sessions.put(uname, sessionRI);
+                return sessionRI;
             }
             else
             {
@@ -70,7 +70,7 @@ public class JobShopImpl extends UnicastRemoteObject implements JobShopRI {
 
 
 
-  public HashMap<String, JobShopSessionRI> getSessions()
+  public HashMap<String, SessionRI> getSessions()
   {
       return sessions;
   }
