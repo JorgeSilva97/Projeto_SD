@@ -107,7 +107,7 @@ public class JobShopClient {
             GeneticAlgorithmJSSP ga = new GeneticAlgorithmJSSP(jsspInstancePath, queue, strategy);
             ga.run();
 
-            //================================================================================================
+            //==========================================================================================================
 
             this.factoryRI.register("jorge", "ufp");
 

@@ -6,6 +6,7 @@ public class User
 
     private String uname;
     private String pword;
+    private int creditos;
 
     public User(String uname, String pword)
     {
@@ -45,5 +46,9 @@ public class User
     public void setPword(String pword) {
         this.pword = pword;
     }
+
+    public void setCredits(int credits){this.creditos = credits;}
+    public void addCredits(int credits){this.creditos = this.creditos + credits;}
+    public int getCredits(){return creditos;}
 }
 

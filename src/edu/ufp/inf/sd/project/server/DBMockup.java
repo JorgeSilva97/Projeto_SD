@@ -58,5 +58,7 @@ public class DBMockup
 
     }
 
-
+    public ArrayList<User> getUsers() {
+        return users;
+    }
 }

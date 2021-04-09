@@ -14,6 +14,7 @@ public class FactoryImpl extends UnicastRemoteObject implements FactoryRI {
     private DBMockup db;
     private HashMap<String, SessionRI> sessions;
 
+
     public FactoryImpl() throws RemoteException
     {
         super();
