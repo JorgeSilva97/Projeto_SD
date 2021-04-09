@@ -1,9 +1,9 @@
 package edu.ufp.inf.sd.project.client;
 
-import edu.ufp.inf.sd.project.server.JobShopRI;
+import edu.ufp.inf.sd.project.server.FactoryRI;
+import edu.ufp.inf.sd.project.server.SessionRI;
 import edu.ufp.inf.sd.project.util.geneticalgorithm.CrossoverStrategies;
 import edu.ufp.inf.sd.project.util.geneticalgorithm.GeneticAlgorithmJSSP;
-import edu.ufp.inf.sd.project.util.tabusearch.TabuSearchJSSP;
 import edu.ufp.inf.sd.project.util.rmisetup.SetupContextRMI;
 import java.rmi.RemoteException;
 import java.rmi.NotBoundException;
@@ -34,7 +34,7 @@ public class JobShopClient {
     /**
      * Remote interface that will hold the Servant proxy
      */
-    private JobShopRI jobShopRI;
+    private FactoryRI factoryRI;
 
     public static void main(String[] args) {
         if (args != null && args.length < 2) {
@@ -73,9 +73,10 @@ public class JobShopClient {
                 //Get service url (including servicename)
                 String serviceUrl = contextRMI.getServicesUrl(0);
                 Logger.getLogger(this.getClass().getName()).log(Level.INFO, "going MAIL_TO_ADDR lookup service @ {0}", serviceUrl);
+
                 
                 //============ Get proxy MAIL_TO_ADDR HelloWorld service ============
-                jobShopRI = (JobShopRI) registry.lookup(serviceUrl);
+                factoryRI = (FactoryRI) registry.lookup(serviceUrl);
             } else {
                 Logger.getLogger(this.getClass().getName()).log(Level.INFO, "registry not bound (check IPs). :(");
                 //registry = LocateRegistry.createRegistry(1099);
@@ -83,14 +84,14 @@ public class JobShopClient {
         } catch (RemoteException | NotBoundException ex) {
             Logger.getLogger(this.getClass().getName()).log(Level.SEVERE, null, ex);
         }
-        return jobShopRI;
+        return factoryRI;
     }
     
     private void playService() {
         try {
             //============ Call TS remote service ============
             String jsspInstancePath = "edu/ufp/inf/sd/project/data/la01.txt";
-            int makespan = this.jobShopRI.runTS(jsspInstancePath);
+            int makespan = this.factoryRI.runTS(jsspInstancePath);
             Logger.getLogger(this.getClass().getName()).log(Level.INFO,
                     "[TS] Makespan for {0} = {1}",
                     new Object[]{jsspInstancePath,String.valueOf(makespan)});
@@ -105,6 +106,23 @@ public class JobShopClient {
                     new Object[]{jsspInstancePath,resultsQueue});
             GeneticAlgorithmJSSP ga = new GeneticAlgorithmJSSP(jsspInstancePath, queue, strategy);
             ga.run();
+
+            //================================================================================================
+
+            this.factoryRI.register("jorge", "ufp");
+
+            SessionRI sessionRI = this.factoryRI.login("jorge", "ufp");
+
+            if (sessionRI != null)
+            {
+                System.out.println("------------------>>>>>>>> ENTRE");
+
+            }
+            System.out.println("------------SAI!!!!!!!!");
+            System.out.println(sessionRI);
+
+
+            Logger.getLogger(this.getClass().getName()).log(Level.INFO, "going MAIL_TO_ADDR finish, GOODBYE. ;)");
 
         } catch (RemoteException ex) {
             Logger.getLogger(this.getClass().getName()).log(Level.SEVERE, null, ex);
