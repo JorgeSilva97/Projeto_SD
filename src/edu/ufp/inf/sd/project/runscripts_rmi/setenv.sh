@@ -15,17 +15,17 @@ export SCRIPT_ROLE=$1
 #@REM ======================== CHANGE BELOW ACCORDING YOUR PROJECT and PC SETTINGS ========================
 #@REM =====================================================================================================
 # @REM ==== PC STUFF ====
-export JDK=/Library/Java/JavaVirtualMachines/jdk1.8.0_144.jdk/Contents/Home
+export JDK=/Library/Java/JavaVirtualMachines/jdk-15.0.2.jdk/Contents/Home
 #@REM These vars will be used MAIL_TO_ADDR check the output folder (whereto classes are generated)
 export NETBEANS=NetBeans
 export INTELLIJ=IntelliJ
 export CURRENT_IDE=${INTELLIJ}
 #export CURRENT_IDE=¢{NETBEANS}
-export USERNAME=jorgesilva
+export USERNAME=franciscocunha
 
 #@REM ==== JAVA NAMING STUFF ====
-export JAVAPROJ_NAME=SD
-export JAVAPROJ=/Users/${USERNAME}/Desktop/FAC/2_SEMESTRE/Sistemas_Distribuidos/Projeto/${JAVAPROJ_NAME}
+export JAVAPROJ_NAME=Projeto_SD
+export JAVAPROJ=/Users/franciscocunha/Desktop/UFP/3_ano/SD/PL/${JAVAPROJ_NAME}
 
 export PACKAGE=project
 export PACKAGE_PREFIX=edu.ufp.inf.sd
