@@ -34,7 +34,7 @@ public class JobShopServer {
     /**
      * Remote interface that will hold reference MAIL_TO_ADDR the Servant impl
      */
-    private JobShopRI jobShopRI;
+    private FactoryRI jobShopRI;
 
     public static void main(String[] args) {
         if (args != null && args.length < 3) {
@@ -56,8 +56,8 @@ public class JobShopServer {
     }
 
     /**
-     * 
-     * @param args 
+     *
+     * @param args
      */
     public JobShopServer(String args[]) {
         try {
@@ -80,7 +80,7 @@ public class JobShopServer {
             //Bind service on rmiregistry and wait for calls
             if (registry != null) {
                 //============ Create Servant ============
-                jobShopRI = new JobShopImpl();
+                jobShopRI = new FactoryImpl();
 
                 //Get service url (including servicename)
                 String serviceUrl = contextRMI.getServicesUrl(0);
@@ -121,4 +121,5 @@ public class JobShopServer {
         props.store(out, "---No Comment---");
         out.close();
     }
+
 }
