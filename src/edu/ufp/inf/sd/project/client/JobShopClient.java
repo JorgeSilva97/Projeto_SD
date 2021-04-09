@@ -1,10 +1,9 @@
 package edu.ufp.inf.sd.project.client;
 
 import edu.ufp.inf.sd.project.server.JobShopRI;
-import edu.ufp.inf.sd.project.server.login.JobShopSessionRI;
+import edu.ufp.inf.sd.project.server.JobShopSessionRI;
 import edu.ufp.inf.sd.project.util.geneticalgorithm.CrossoverStrategies;
 import edu.ufp.inf.sd.project.util.geneticalgorithm.GeneticAlgorithmJSSP;
-import edu.ufp.inf.sd.project.util.tabusearch.TabuSearchJSSP;
 import edu.ufp.inf.sd.project.util.rmisetup.SetupContextRMI;
 import java.rmi.RemoteException;
 import java.rmi.NotBoundException;

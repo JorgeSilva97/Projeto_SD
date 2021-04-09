@@ -1,7 +1,5 @@
 package edu.ufp.inf.sd.project.server;
 
-import edu.ufp.inf.sd.project.server.login.JobShopSessionRI;
-
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 

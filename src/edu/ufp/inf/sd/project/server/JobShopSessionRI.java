@@ -1,4 +1,4 @@
-package edu.ufp.inf.sd.project.server.login;
+package edu.ufp.inf.sd.project.server;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -6,5 +6,5 @@ import java.rmi.RemoteException;
 
 public interface JobShopSessionRI extends Remote
 {
-    public void logout() throws RemoteException;
+    public void logout(String uname) throws RemoteException;
 }

@@ -1,8 +1,5 @@
 package edu.ufp.inf.sd.project.server;
 
-import edu.ufp.inf.sd.project.server.login.DBMockup;
-import edu.ufp.inf.sd.project.server.login.JobShopSessionImpl;
-import edu.ufp.inf.sd.project.server.login.JobShopSessionRI;
 import edu.ufp.inf.sd.project.util.tabusearch.TabuSearchJSSP;
 
 import java.rmi.RemoteException;
@@ -37,12 +34,15 @@ public class JobShopImpl extends UnicastRemoteObject implements JobShopRI {
     }
 
     @Override
-    public boolean register(String uname, String pword) throws RemoteException {
+    public boolean register(String uname, String pword) throws RemoteException
+    {
         if (!db.exists(uname, pword))
         {
+            Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Utilizador {0}, registado com sucesso!", uname);
             db.register(uname, pword);
             return true;
         }
+        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Erro, Utilizador já existente!");
         return false;
     }
 
@@ -53,20 +53,27 @@ public class JobShopImpl extends UnicastRemoteObject implements JobShopRI {
         {
             if (!this.sessions.containsKey(uname))
             {
+                Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Sessão iniciada com sucesso!");
                 JobShopSessionRI jobShopSessionRI = new JobShopSessionImpl(this, uname);
                 this.sessions.put(uname, jobShopSessionRI);
                 return jobShopSessionRI;
             }
             else
+            {
+                Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Sessão já iniciada!");
                 return this.sessions.get(uname);
+            }
+
         }
         return null;
     }
 
-    public void remove (String uname)
-    {
-        this.sessions.remove(uname);
-    }
+
+
+  public HashMap<String, JobShopSessionRI> getSessions()
+  {
+      return sessions;
+  }
 
     public DBMockup getDb()
     {
