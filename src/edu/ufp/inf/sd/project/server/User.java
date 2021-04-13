@@ -1,4 +1,4 @@
-package edu.ufp.inf.sd.project.server.login;
+package edu.ufp.inf.sd.project.server;
 
 
 public class User

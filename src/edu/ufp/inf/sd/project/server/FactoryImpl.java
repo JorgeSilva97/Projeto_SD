@@ -1,8 +1,5 @@
 package edu.ufp.inf.sd.project.server;
 
-import edu.ufp.inf.sd.project.server.login.DBMockup;
-import edu.ufp.inf.sd.project.server.login.JobShopSessionImpl;
-import edu.ufp.inf.sd.project.server.login.JobShopSessionRI;
 import edu.ufp.inf.sd.project.util.tabusearch.TabuSearchJSSP;
 
 import java.rmi.RemoteException;
@@ -12,12 +9,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
-public class JobShopImpl extends UnicastRemoteObject implements JobShopRI {
+public class FactoryImpl extends UnicastRemoteObject implements FactoryRI {
 
     private DBMockup db;
-    private HashMap<String, JobShopSessionRI> sessions;
+    private HashMap<String, SessionRI> sessions;
 
-    public JobShopImpl() throws RemoteException
+    public FactoryImpl() throws RemoteException
     {
         super();
         db = new DBMockup();
@@ -37,36 +34,46 @@ public class JobShopImpl extends UnicastRemoteObject implements JobShopRI {
     }
 
     @Override
-    public boolean register(String uname, String pword) throws RemoteException {
+    public boolean register(String uname, String pword) throws RemoteException
+    {
         if (!db.exists(uname, pword))
         {
+            Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Utilizador {0}, registado com sucesso!", uname);
             db.register(uname, pword);
             return true;
         }
+        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Erro, Utilizador já existente!");
         return false;
     }
 
     @Override
-    public JobShopSessionRI login(String uname, String pword) throws RemoteException
+    public SessionRI login(String uname, String pword) throws RemoteException
     {
         if (db.exists(uname, pword))
         {
             if (!this.sessions.containsKey(uname))
             {
-                JobShopSessionRI jobShopSessionRI = new JobShopSessionImpl(this, uname);
-                this.sessions.put(uname, jobShopSessionRI);
-                return jobShopSessionRI;
+                Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Sessão iniciada com sucesso!");
+                SessionRI sessionRI = new SessionImpl(this, uname);
+                this.sessions.put(uname, sessionRI);
+                return sessionRI;
             }
             else
+            {
+                Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Sessão já iniciada!");
                 return this.sessions.get(uname);
+            }
+
         }
         return null;
     }
 
-    public void remove (String uname)
-    {
-        this.sessions.remove(uname);
-    }
+
+
+  public HashMap<String, SessionRI> getSessions()
+  {
+      return sessions;
+  }
 
     public DBMockup getDb()
     {
