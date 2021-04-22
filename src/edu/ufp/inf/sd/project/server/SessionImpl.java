@@ -50,17 +50,17 @@ public class SessionImpl extends UnicastRemoteObject implements SessionRI
     }
 
     @Override
-    public ArrayList<JobGroupImpl> removeJobGroup(String uname, int id) throws RemoteException
+    public ArrayList<JobGroupImpl> removeJobGroup(String uname, int jobId) throws RemoteException
     {
         for (User u : factoryImpl.getDb().getUsers())
         {
             if (u.getUname().compareTo(uname) == 0)
             {
-                if (jobs.g))
+
             }
 
         }
-
+        return null;
     }
 
 
