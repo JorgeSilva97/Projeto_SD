@@ -12,6 +12,7 @@ public class SessionImpl extends UnicastRemoteObject implements SessionRI
 
 
     private FactoryImpl factoryImpl;
+    ArrayList<JobGroupImpl> jobs = new ArrayList<>();
 
     public SessionImpl(FactoryImpl factoryImpl, String uname) throws RemoteException {
         super();
@@ -29,27 +30,45 @@ public class SessionImpl extends UnicastRemoteObject implements SessionRI
     }
 
     @Override
-    public JobShopRI createJobGroup(String uname, int length) throws RemoteException
+    public ArrayList<JobGroupImpl> createJobGroup(String uname, int length) throws RemoteException
+    {
+        ArrayList<JobGroupImpl> jobGroups = new ArrayList<>();
+        for (User u : factoryImpl.getDb().getUsers())
+        {
+            if (u.getUname().compareTo(uname) == 0)
+            {
+                for (int i=0; i<length; i++)
+                {
+                    JobGroupImpl jobGroup = new JobGroupImpl();
+                    jobs.add(jobGroup);
+                    jobGroups.add(jobGroup);
+                    //u.addCredits(100);
+                }
+            }
+        }
+        return jobGroups;
+    }
+
+    @Override
+    public ArrayList<JobGroupImpl> removeJobGroup(String uname, int jobId) throws RemoteException
     {
         for (User u : factoryImpl.getDb().getUsers())
         {
             if (u.getUname().compareTo(uname) == 0)
             {
-                //?????
-                u.addCredits(100);
-            }
 
+            }
 
         }
         return null;
     }
 
+
     @Override
-    public ArrayList<String> listJobGoups() throws RemoteException
+    public void listJobGoups() throws RemoteException
     {
-        ArrayList<String> jobs = new ArrayList<>();
-        //for (JobShopImpl jobShop : factoryImpl.ge)
-        return null;
+        for (JobGroupImpl jobGroup : this.jobs)
+            Logger.getLogger(this.getClass().getName()).log(Level.INFO, "List JobGroup: @ {0}", jobGroup);
     }
 
 
