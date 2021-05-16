@@ -36,6 +36,8 @@ public class JobShopServer {
      */
     private FactoryRI jobShopRI;
 
+    //arraylist de sessões
+
     public static void main(String[] args) {
         if (args != null && args.length < 3) {
             System.err.println("usage: java [options] edu.ufp.sd.PROJETO.server.ProjetoSERVER <rmi_registry_ip> <rmi_registry_port> <service_name>");
