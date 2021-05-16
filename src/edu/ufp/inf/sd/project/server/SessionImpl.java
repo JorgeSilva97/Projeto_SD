@@ -12,12 +12,16 @@ public class SessionImpl extends UnicastRemoteObject implements SessionRI
 
 
     private FactoryImpl factoryImpl;
-    ArrayList<JobGroupImpl> jobs = new ArrayList<>();
+    //ArrayList<JobGroupImpl> jobs = new ArrayList<>();
+    JobGroupImpl jobGroup;
+
 
     public SessionImpl(FactoryImpl factoryImpl, String uname) throws RemoteException {
         super();
         this.factoryImpl = factoryImpl;
     }
+
+    //getjobgroups
 
     @Override
     public void logout(String uname) throws RemoteException
@@ -40,7 +44,7 @@ public class SessionImpl extends UnicastRemoteObject implements SessionRI
                 for (int i=0; i<length; i++)
                 {
                     JobGroupImpl jobGroup = new JobGroupImpl();
-                    jobs.add(jobGroup);
+                    //jobs.add(jobGroup);
                     jobGroups.add(jobGroup);
                     //u.addCredits(100);
                 }
@@ -64,12 +68,7 @@ public class SessionImpl extends UnicastRemoteObject implements SessionRI
     }
 
 
-    @Override
-    public void listJobGoups() throws RemoteException
-    {
-        for (JobGroupImpl jobGroup : this.jobs)
-            Logger.getLogger(this.getClass().getName()).log(Level.INFO, "List JobGroup: @ {0}", jobGroup);
-    }
+
 
 
 }
