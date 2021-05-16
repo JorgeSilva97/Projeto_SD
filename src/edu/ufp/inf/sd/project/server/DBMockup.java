@@ -1,6 +1,10 @@
 package edu.ufp.inf.sd.project.server;
 
+import edu.ufp.inf.sd.project.client.Worker;
+
+import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * This class simulates a DBMockup for managing users and books.
@@ -13,17 +17,17 @@ public class DBMockup
 
     //private final ArrayList<Book> books;// = new ArrayList();
     private final ArrayList<User> users;// = new ArrayList();
+    //arraylist de workers
+    private HashMap<Integer, JobGroupImpl> jobgroups;
+    ArrayList<Worker> workers = new ArrayList<>();
 
     /**
      * This constructor creates and inits the database with some books and users.
      */
     public DBMockup() {
        // books = new ArrayList();
-        users = new ArrayList();
-        //Add 3 books
-       // books.add(new Book("Distributed Systems: principles and paradigms", "Tanenbaum"));
-       // books.add(new Book("Distributed Systems: concepts and design", "Colouris"));
-       // books.add(new Book("Distributed Computing Networks", "Tanenbaum"));
+        this.users = new ArrayList();
+        this.jobgroups = new HashMap<>();
         //Add one user
         users.add(new User("guest", "ufp"));
     }
@@ -55,6 +59,25 @@ public class DBMockup
                 return true;
         }
         return false;
+
+    }
+
+    public void addJobGroup(JobGroupImpl jobGroup) throws RemoteException {
+        jobgroups.put(jobGroup.getJobId(),jobGroup);
+    }
+
+    public String getJobGroup(Integer jobId){
+        if(jobgroups.containsKey(jobId)){
+            return jobgroups.get(jobId).getJoburl();
+        }
+        return null;
+    }
+
+    public void removeJobGroup(JobGroupImpl jobGroup){
+        this.jobgroups.remove(jobGroup);
+    }
+
+    public void addWorkers(Integer jobId){
 
     }
 

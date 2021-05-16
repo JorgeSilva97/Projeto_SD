@@ -10,10 +10,11 @@ import java.util.logging.Logger;
 public class SessionImpl extends UnicastRemoteObject implements SessionRI
 {
 
-
+    private int id;
     private FactoryImpl factoryImpl;
     //ArrayList<JobGroupImpl> jobs = new ArrayList<>();
-    JobGroupImpl jobGroup;
+
+
 
 
     public SessionImpl(FactoryImpl factoryImpl, String uname) throws RemoteException {
@@ -33,42 +34,57 @@ public class SessionImpl extends UnicastRemoteObject implements SessionRI
         }
     }
 
-    @Override
-    public ArrayList<JobGroupImpl> createJobGroup(String uname, int length) throws RemoteException
+
+    public JobGroupImpl createJobGroup(String uname, String path) throws RemoteException
     {
-        ArrayList<JobGroupImpl> jobGroups = new ArrayList<>();
         for (User u : factoryImpl.getDb().getUsers())
         {
             if (u.getUname().compareTo(uname) == 0)
             {
-                for (int i=0; i<length; i++)
-                {
                     JobGroupImpl jobGroup = new JobGroupImpl();
-                    //jobs.add(jobGroup);
-                    jobGroups.add(jobGroup);
+                    jobGroup.setJoburl(path);
+                    jobGroup.setUser(uname);
+                    this.factoryImpl.addJobGroup(jobGroup);
+                    this.factoryImpl.getDb().addJobGroup(jobGroup);
                     //u.addCredits(100);
-                }
+                return jobGroup;
             }
-        }
-        return jobGroups;
-    }
-
-    @Override
-    public ArrayList<JobGroupImpl> removeJobGroup(String uname, int jobId) throws RemoteException
-    {
-        for (User u : factoryImpl.getDb().getUsers())
-        {
-            if (u.getUname().compareTo(uname) == 0)
-            {
-
-            }
-
         }
         return null;
     }
 
+    @Override
+    public void removeJobGroup(String uname, int jobId) throws RemoteException
+    {
+        for (User u : factoryImpl.getDb().getUsers())
+        {
+            if (u.getUname().compareTo(uname) == 0)
+            {
+                if(this.factoryImpl.getJobGroups().contains(jobId)){
+                    JobGroupImpl jobGroup = this.factoryImpl.getJobGroups().get(jobId);
+                    if(jobGroup.getUser().equals(uname)){
+                        this.factoryImpl.getJobGroups().remove(jobGroup);
+                        this.factoryImpl.getDb().removeJobGroup(jobGroup);
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public void listJobGoups(String uname) throws RemoteException {
+        for(Entry  : this.factoryImpl.getJobGroups().entrySet()){
+            if(job.getUser().equals(uname))
+            System.out.println(job);
+        }
+    }
 
 
+    public int getId() {
+        return id;
+    }
 
-
+    public void setId(int id) {
+        this.id = id;
+    }
 }

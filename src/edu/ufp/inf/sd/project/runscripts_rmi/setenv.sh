@@ -21,11 +21,11 @@ export NETBEANS=NetBeans
 export INTELLIJ=IntelliJ
 export CURRENT_IDE=${INTELLIJ}
 #export CURRENT_IDE=¢{NETBEANS}
-export USERNAME=ivoaspereira
+export USERNAME=ricardo
 
 #@REM ==== JAVA NAMING STUFF ====
 export JAVAPROJ_NAME=SD
-export JAVAPROJ=/Users/${USERNAME}/IdeaProjects/${JAVAPROJ_NAME}
+export JAVAPROJ=/home/${USERNAME}/Documentos/${JAVAPROJ_NAME}
 
 export PACKAGE=project
 export PACKAGE_PREFIX=edu.ufp.inf.sd

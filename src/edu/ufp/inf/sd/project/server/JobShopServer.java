@@ -1,5 +1,6 @@
 package edu.ufp.inf.sd.project.server;
 
+import edu.ufp.inf.sd.project.client.Worker;
 import edu.ufp.inf.sd.project.util.rmisetup.SetupContextRMI;
 
 import java.io.FileInputStream;
@@ -7,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.rmi.registry.Registry;
+import java.util.ArrayList;
 import java.util.Properties;
 import java.util.function.BiConsumer;
 import java.util.logging.Level;
@@ -36,7 +38,7 @@ public class JobShopServer {
      */
     private FactoryRI jobShopRI;
 
-    //arraylist de sessões
+
 
     public static void main(String[] args) {
         if (args != null && args.length < 3) {

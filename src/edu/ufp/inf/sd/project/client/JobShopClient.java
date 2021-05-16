@@ -115,10 +115,10 @@ public class JobShopClient {
 
             if (sessionRI != null)
             {
-                System.out.println("------------------>>>>>>>> ENTRE");
-
+                //CRIAR JOB'S
             }
             System.out.println("------------SAI!!!!!!!!");
+            sessionRI.logout("jorge");
             System.out.println(sessionRI);
 
 

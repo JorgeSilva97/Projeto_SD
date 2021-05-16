@@ -1,9 +1,11 @@
 package edu.ufp.inf.sd.project.server;
 
+import edu.ufp.inf.sd.project.client.Worker;
 import edu.ufp.inf.sd.project.util.tabusearch.TabuSearchJSSP;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -13,13 +15,15 @@ public class FactoryImpl extends UnicastRemoteObject implements FactoryRI {
 
     private DBMockup db;
     private HashMap<String, SessionRI> sessions;
+    private HashMap<Integer,JobGroupImpl> jobGroups;
+
 
 
     public FactoryImpl() throws RemoteException
     {
         super();
-        db = new DBMockup();
-        sessions = new HashMap<>();
+        this.sessions = new HashMap<>();
+        this.jobGroups = new HashMap<>();
     }
 
     @Override
@@ -69,9 +73,19 @@ public class FactoryImpl extends UnicastRemoteObject implements FactoryRI {
         return null;
     }
 
+    public void addJobGroup(JobGroupImpl jobGroup){
+        this.jobGroups.put(jobGroup.getJobId(),jobGroup);
+    }
 
+    public HashMap<Integer, JobGroupImpl> getJobGroups() {
+        return jobGroups;
+    }
 
-  public HashMap<String, SessionRI> getSessions()
+    public void setJobGroups(HashMap<Integer, JobGroupImpl> jobGroups) {
+        this.jobGroups = jobGroups;
+    }
+
+    public HashMap<String, SessionRI> getSessions()
   {
       return sessions;
   }
