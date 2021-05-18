@@ -3,19 +3,21 @@ package edu.ufp.inf.sd.project.server;
 import edu.ufp.inf.sd.project.client.Worker;
 import java.util.ArrayList;
 
-import edu.ufp.inf.sd.project.client.Worker;
-
-import java.util.ArrayList;
-
 public class JobGroupImpl implements JobGroupRI
 {
 
     private int jobId;
     private String user;
     private String joburl;
+    private String strategy;
     //array de workers disponiveis
     ArrayList<Worker> workers = new ArrayList<>();
 
+    public JobGroupImpl(String user, String joburl, String strategy) {
+        this.user = user;
+        this.joburl = joburl;
+        this.strategy = strategy;
+    }
 
     public String getUser() {
         return user;
@@ -47,6 +49,7 @@ public class JobGroupImpl implements JobGroupRI
                 "jobId=" + jobId +
                 ", user='" + user + '\'' +
                 ", joburl='" + joburl + '\'' +
+                ", strategy='" + strategy + '\'' +
                 '}';
     }
 }

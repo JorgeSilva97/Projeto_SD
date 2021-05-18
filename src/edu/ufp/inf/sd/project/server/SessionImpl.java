@@ -3,6 +3,7 @@ package edu.ufp.inf.sd.project.server;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -12,6 +13,7 @@ public class SessionImpl extends UnicastRemoteObject implements SessionRI
 
     private int id;
     private FactoryImpl factoryImpl;
+    private String user;
     //ArrayList<JobGroupImpl> jobs = new ArrayList<>();
 
 
@@ -19,6 +21,7 @@ public class SessionImpl extends UnicastRemoteObject implements SessionRI
 
     public SessionImpl(FactoryImpl factoryImpl, String uname) throws RemoteException {
         super();
+        this.user = uname;
         this.factoryImpl = factoryImpl;
     }
 
@@ -35,15 +38,14 @@ public class SessionImpl extends UnicastRemoteObject implements SessionRI
     }
 
 
-    public JobGroupImpl createJobGroup(String uname, String path) throws RemoteException
+    public JobGroupImpl createJobGroup(String uname, String path, String strategy) throws RemoteException
     {
         for (User u : factoryImpl.getDb().getUsers())
         {
             if (u.getUname().compareTo(uname) == 0)
             {
-                    JobGroupImpl jobGroup = new JobGroupImpl();
-                    jobGroup.setJoburl(path);
-                    jobGroup.setUser(uname);
+                    JobGroupImpl jobGroup = new JobGroupImpl(uname, path, strategy);
+                    jobGroup.setJobId(this.factoryImpl.getJobGroups().size()+1);
                     this.factoryImpl.addJobGroup(jobGroup);
                     this.factoryImpl.getDb().addJobGroup(jobGroup);
                     //u.addCredits(100);
@@ -60,7 +62,7 @@ public class SessionImpl extends UnicastRemoteObject implements SessionRI
         {
             if (u.getUname().compareTo(uname) == 0)
             {
-                if(this.factoryImpl.getJobGroups().contains(jobId)){
+                if(this.factoryImpl.getJobGroups().containsKey(jobId)){
                     JobGroupImpl jobGroup = this.factoryImpl.getJobGroups().get(jobId);
                     if(jobGroup.getUser().equals(uname)){
                         this.factoryImpl.getJobGroups().remove(jobGroup);
@@ -73,18 +75,8 @@ public class SessionImpl extends UnicastRemoteObject implements SessionRI
 
     @Override
     public void listJobGoups(String uname) throws RemoteException {
-        for(Entry  : this.factoryImpl.getJobGroups().entrySet()){
-            if(job.getUser().equals(uname))
-            System.out.println(job);
+        for (Map.Entry me : factoryImpl.getJobGroups().entrySet()) {
+            System.out.println("Key: "+me.getKey() + " & Value: " + me.getValue());
         }
-    }
-
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
     }
 }

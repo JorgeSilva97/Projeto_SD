@@ -2,6 +2,7 @@ package edu.ufp.inf.sd.project.client;
 
 import edu.ufp.inf.sd.project.server.FactoryRI;
 import edu.ufp.inf.sd.project.server.SessionRI;
+import edu.ufp.inf.sd.project.server.User;
 import edu.ufp.inf.sd.project.util.geneticalgorithm.CrossoverStrategies;
 import edu.ufp.inf.sd.project.util.geneticalgorithm.GeneticAlgorithmJSSP;
 import edu.ufp.inf.sd.project.util.rmisetup.SetupContextRMI;
@@ -9,6 +10,8 @@ import java.rmi.RemoteException;
 import java.rmi.NotBoundException;
 import java.rmi.Remote;
 import java.rmi.registry.Registry;
+import java.util.ArrayList;
+import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -89,7 +92,7 @@ public class JobShopClient {
     
     private void playService() {
         try {
-            //============ Call TS remote service ============
+            /*//============ Call TS remote service ============
             String jsspInstancePath = "edu/ufp/inf/sd/project/data/la01.txt";
             int makespan = this.factoryRI.runTS(jsspInstancePath);
             Logger.getLogger(this.getClass().getName()).log(Level.INFO,
@@ -105,27 +108,176 @@ public class JobShopClient {
                     "GA is running for {0}, check queue {1}",
                     new Object[]{jsspInstancePath,resultsQueue});
             GeneticAlgorithmJSSP ga = new GeneticAlgorithmJSSP(jsspInstancePath, queue, strategy);
-            ga.run();
+            ga.run();*/
 
             //==========================================================================================================
 
-            this.factoryRI.register("jorge", "ufp");
+            /*this.factoryRI.register("jorge", "ufp");
 
             SessionRI sessionRI = this.factoryRI.login("jorge", "ufp");
 
             if (sessionRI != null)
             {
                 //CRIAR JOB'S
+
+            }*/
+
+            String username, pw;
+            SessionRI sessionRI = null;
+            SessionInfo sessionInfo = null;
+            System.out.println("1 - Register and Login");
+            System.out.println("2 - Login");
+
+            //SCAN FOR OPTION
+            Scanner myObj = new Scanner(System.in);
+            String opt = myObj.nextLine();
+
+            switch (opt){
+                case "1":
+                    System.out.print("Username: ");
+                    username = myObj.nextLine();
+                    System.out.print("Password: ");
+                    pw = myObj.nextLine();
+                    factoryRI.register(username,pw);
+                    sessionRI = factoryRI.login(username,pw);
+                    sessionInfo = new SessionInfo(sessionRI,username);
+                    break;
+                case "2":
+                    System.out.print("Username: ");
+                    username = myObj.nextLine();
+                    System.out.print("Password: ");
+                    pw = myObj.nextLine();
+                    sessionRI = factoryRI.login(username,pw);
+                    sessionInfo = new SessionInfo(sessionRI,username);
+                    break;
             }
-            System.out.println("------------SAI!!!!!!!!");
-            sessionRI.logout("jorge");
-            System.out.println(sessionRI);
+
 
 
             Logger.getLogger(this.getClass().getName()).log(Level.INFO, "going MAIL_TO_ADDR finish, GOODBYE. ;)");
 
         } catch (RemoteException ex) {
             Logger.getLogger(this.getClass().getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void menu(SessionInfo sessionInfo) throws RemoteException {
+        int credits = 0;
+        for(User u: factoryRI.getDb().getUsers()){
+            if(u.getUname().compareTo(sessionInfo.getUsername())==0){
+                credits = u.getCredits();
+            }
+        }
+
+
+        System.out.println("User: " + sessionInfo.getUsername()+"\tCredits: " + credits+"\n");
+        System.out.println("1 - Create task");
+        System.out.println("2 - List tasks");
+        System.out.println("3 - Join task");
+        System.out.println("4 - Delete task");
+        System.out.println("5 - Pause task");
+        System.out.println("6 - Logout");
+
+        Scanner myObj = new Scanner(System.in);
+        String opt = myObj.nextLine();
+
+        switch (opt){
+            //CREATE TASK
+            case "1":
+                System.out.println("What strategy do you want to use? (1, 2 or 3)");
+                String opt2 = myObj.nextLine();
+
+                if(opt2.compareTo("1") == 0 || opt2.compareTo("2") == 0 || opt2.compareTo("3") == 0){
+                    System.out.println("Length of the password?");
+                    int fixLength = myObj.nextInt();
+                    sessionInfo.getSessionRI().createTask(sessionInfo.getUsername(),opt2, fixLength);
+                }
+                //Pay 100 credits to create task
+                for(User u: factoryRI.getDb().getUsers()){
+                    if(u.getUname().compareTo(sessionInfo.getUsername()) == 0){
+                        u.setCredits(u.getCredits() - 100);
+                    }
+                }
+                System.out.println();
+                tasksMenu(sessionInfo);
+                break;
+            //LIST TASKS
+            case "2":
+                ArrayList<String> tasks = sessionInfo.getSessionRI().listTasks();
+                System.out.println("Tasks: ");
+
+                int i = 0;
+                for(String s: tasks){
+                    System.out.println("Id in array (use to delete): " + i + "\tTask id: " + s);
+                    i++;
+                }
+                System.out.println();
+                tasksMenu(sessionInfo);
+                break;
+            //JOIN TASK
+            case "3":
+                sessionInfo.getSessionRI().listTasks();
+                System.out.println("What task do you want to join?");
+                int taskId = myObj.nextInt();
+
+
+                for(User user: factoryRI.getDb().getUsers()){
+                    if(user.getUname().compareTo(sessionInfo.getUsername()) == 0){
+                        //I have to check if the user has already worked on the task to not create another observer
+                        //System.out.println("TESTE: " + ((SubjectRI)factoryRI.getDb().getTasks().get(taskId)).getObservers());
+                        //TimeUnit.SECONDS.sleep(4);
+                        /*
+                        if( ((SubjectRI)factoryRI.getDb().getTasks().get(taskId)).getObservers().size() == 0 || firstTimeJoiningTask){
+                            observer = new ObserverImpl((SubjectRI)factoryRI.getDb().getTasks().get(taskId),user);
+                            firstTimeJoiningTask = false;
+                        }
+
+                        for(ObserverRI observerRI: ((SubjectRI)factoryRI.getDb().getTasks().get(taskId)).getObservers()){
+                            //System.out.println(((ObserverImpl)observerRI).getUser().getUname() +user.getUname() );
+                            TimeUnit.SECONDS.sleep(4);
+                            if( observerRI.getUser().getUname().compareTo(user.getUname()) == 0 ){
+                                observer = observerRI;
+                            }
+                        }
+                         */
+
+
+                        observer = new ObserverImpl(factoryRI.getDb().getTasks().get(taskId),user);
+
+                        String strategy = ((SubjectRI)factoryRI.getDb().getTasks().get(taskId)).getState().getStrategy();
+                        if(strategy.compareTo("1") == 0){
+                            observer.workOnTask1v2();
+                            //observer.workOnTask1Threaded();
+                        } else if (strategy.compareTo("2") == 0){
+                            observer.workOnTask2v2();
+                        } else  if (strategy.compareTo("3") == 0){
+                            observer.workOnTask3();
+                        }
+
+
+                        tasksMenu(sessionInfo);
+                    }
+                }
+                break;
+            //DELETE TASK
+            case "4":
+                System.out.print("Which task do you want to delete? ");
+                int id = Integer.parseInt(myObj.nextLine());
+                sessionInfo.getSessionRI().deleteTask(id,sessionInfo.getUsername());
+                System.out.println();
+                tasksMenu(sessionInfo);
+                break;
+            //PAUSE TASK
+            case "5":
+                System.out.println("Which task do you want to pause? ");
+                int task = myObj.nextInt();
+                ((SubjectRI)factoryRI.getDb().getTasks().get(task)).setState("PAUSE","");
+                tasksMenu(sessionInfo);
+                break;
+            //LOGOUT
+            case "6":
+                sessionInfo.getSessionRI().logout(sessionInfo.getUsername());
+                break;
         }
     }
 }
