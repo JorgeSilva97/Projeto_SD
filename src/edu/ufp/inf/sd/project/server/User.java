@@ -1,8 +1,9 @@
 package edu.ufp.inf.sd.project.server;
 
 
-public class User
-{
+import java.io.Serializable;
+
+public class User implements Serializable {
 
     private String uname;
     private String pword;
@@ -12,6 +13,7 @@ public class User
     {
         this.uname = uname;
         this.pword = pword;
+        this.creditos = 100;
     }
 
     @Override

@@ -2,21 +2,23 @@ package edu.ufp.inf.sd.project.server;
 
 import edu.ufp.inf.sd.project.client.Worker;
 
+import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
- * This class simulates a DBMockup for managing users and books.
+ * This class simulates a DBMockup for managing users
  *
  * @author rmoreira
  *
  */
-public class DBMockup
-{
+public class DBMockup implements Serializable {
 
-    //private final ArrayList<Book> books;// = new ArrayList();
-    private final ArrayList<User> users;// = new ArrayList();
+    private final ArrayList<User> users;
+    private HashMap<String, SessionRI> sessions;
+
     //arraylist de workers
     private HashMap<Integer, JobGroupImpl> jobgroups;
     ArrayList<Worker> workers = new ArrayList<>();
@@ -28,6 +30,7 @@ public class DBMockup
        // books = new ArrayList();
         this.users = new ArrayList();
         this.jobgroups = new HashMap<>();
+        this.sessions = new HashMap<>();
         //Add one user
         users.add(new User("guest", "ufp"));
     }
@@ -77,8 +80,42 @@ public class DBMockup
         this.jobgroups.remove(jobGroup);
     }
 
-    public void addWorkers(Integer jobId){
 
+    public void listJobGroups() throws RemoteException {
+        System.out.println("entrei");
+        System.out.println(getJobgroups().size());
+        for (Map.Entry me : getJobgroups().entrySet()) {
+            System.out.println("Key: " + me.getKey() + " Job: " + me.getValue());
+        }
+    }
+
+    public void addWorkers(Integer jobId, Worker worker){
+        this.getJobgroups().get(jobId).workers.add(worker);
+        this.workers.add(worker);
+    }
+
+    public HashMap<String, SessionRI> getSessions() {
+        return sessions;
+    }
+
+    public void setSessions(HashMap<String, SessionRI> sessions) {
+        this.sessions = sessions;
+    }
+
+    public HashMap<Integer, JobGroupImpl> getJobgroups() {
+        return jobgroups;
+    }
+
+    public void setJobgroups(HashMap<Integer, JobGroupImpl> jobgroups) {
+        this.jobgroups = jobgroups;
+    }
+
+    public ArrayList<Worker> getWorkers() {
+        return workers;
+    }
+
+    public void setWorkers(ArrayList<Worker> workers) {
+        this.workers = workers;
     }
 
     public ArrayList<User> getUsers() {

@@ -14,17 +14,11 @@ import java.util.logging.Logger;
 public class FactoryImpl extends UnicastRemoteObject implements FactoryRI {
 
     private DBMockup db;
-    private HashMap<String, SessionRI> sessions;
-    private HashMap<Integer,JobGroupImpl> jobGroups;
-
-
 
     public FactoryImpl() throws RemoteException
     {
         super();
         this.db = new DBMockup();
-        this.sessions = new HashMap<>();
-        this.jobGroups = new HashMap<>();
     }
 
     @Override
@@ -57,39 +51,23 @@ public class FactoryImpl extends UnicastRemoteObject implements FactoryRI {
     {
         if (db.exists(uname, pword))
         {
-            if (!this.sessions.containsKey(uname))
+            if (!this.getDb().getSessions().containsKey(uname))
             {
                 Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Sessão iniciada com sucesso!");
                 SessionRI sessionRI = new SessionImpl(this, uname);
-                this.sessions.put(uname, sessionRI);
+                this.getDb().getSessions().put(uname, sessionRI);
                 return sessionRI;
             }
             else
             {
                 Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Sessão já iniciada!");
-                return this.sessions.get(uname);
+                return this.getDb().getSessions().get(uname);
             }
 
         }
         return null;
     }
 
-    public void addJobGroup(JobGroupImpl jobGroup){
-        this.jobGroups.put(jobGroup.getJobId(),jobGroup);
-    }
-
-    public HashMap<Integer, JobGroupImpl> getJobGroups() {
-        return jobGroups;
-    }
-
-    public void setJobGroups(HashMap<Integer, JobGroupImpl> jobGroups) {
-        this.jobGroups = jobGroups;
-    }
-
-    public HashMap<String, SessionRI> getSessions()
-  {
-      return sessions;
-  }
 
     public DBMockup getDb()
     {
