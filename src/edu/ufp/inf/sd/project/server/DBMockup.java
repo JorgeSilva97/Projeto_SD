@@ -69,29 +69,29 @@ public class DBMockup implements Serializable {
         jobgroups.put(jobGroup.getJobId(),jobGroup);
     }
 
-    public String getJobGroup(Integer jobId){
+    public JobGroupImpl getJobGroup(Integer jobId){
         if(jobgroups.containsKey(jobId)){
-            return jobgroups.get(jobId).getJoburl();
+            return jobgroups.get(jobId);
         }
         return null;
     }
 
-    public void removeJobGroup(JobGroupImpl jobGroup){
-        this.jobgroups.remove(jobGroup);
+    public void removeJobGroup(int jobId){
+        this.jobgroups.remove(jobId);
     }
 
-
-    public void listJobGroups() throws RemoteException {
-        System.out.println("entrei");
-        System.out.println(getJobgroups().size());
-        for (Map.Entry me : getJobgroups().entrySet()) {
-            System.out.println("Key: " + me.getKey() + " Job: " + me.getValue());
-        }
-    }
 
     public void addWorkers(Integer jobId, Worker worker){
         this.getJobgroups().get(jobId).workers.add(worker);
         this.workers.add(worker);
+    }
+
+    public User getUser(String uname){
+        for(User u : this.users){
+            if(u.getUname().equals(uname))
+                return u;
+        }
+        return null;
     }
 
     public HashMap<String, SessionRI> getSessions() {

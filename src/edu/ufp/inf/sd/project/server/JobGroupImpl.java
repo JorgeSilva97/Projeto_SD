@@ -4,6 +4,9 @@ import edu.ufp.inf.sd.project.client.Worker;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class JobGroupImpl implements JobGroupRI, Serializable
 {
@@ -12,15 +15,34 @@ public class JobGroupImpl implements JobGroupRI, Serializable
     private String user;
     private String joburl;
     private String strategy;
+    private int state; // 1 - Ativo, 2 - Pausado, 0 - Finalizado
     private int credits;
+    private int bestResult;
     //array de workers disponiveis
     ArrayList<Worker> workers = new ArrayList<>();
+    HashMap<Integer, Integer> results = new HashMap<>();
 
     public JobGroupImpl(String user, String joburl, String strategy, int credits) {
         this.user = user;
         this.joburl = joburl;
         this.strategy = strategy;
         this.credits = credits;
+        this.state = 1;
+        this.bestResult = 0;
+    }
+
+    public void changeState(int state){
+        this.state = state;
+    }
+
+    public void saveResults(Integer workId, Integer result){
+        this.results.put(workId, result);
+        if(this.bestResult < result)
+            this.bestResult = result;
+
+        Logger.getLogger(this.getClass().getName()).log(Level.INFO,
+                "[JobGroup] Result {0} from Worker -> {1}\n successfully saved!",
+                new Object[]{result,workId});
     }
 
     public String getUser() {

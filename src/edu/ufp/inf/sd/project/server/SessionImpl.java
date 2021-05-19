@@ -54,11 +54,20 @@ public class SessionImpl extends UnicastRemoteObject implements SessionRI {
                 if (this.factoryImpl.getDb().getJobgroups().containsKey(jobId)) {
                     JobGroupImpl jobGroup = this.factoryImpl.getDb().getJobgroups().get(jobId);
                     if (jobGroup.getUser().equals(uname)) {
-                        this.factoryImpl.getDb().removeJobGroup(jobGroup);
+                        this.factoryImpl.getDb().removeJobGroup(jobId);
                     }
                 }
             }
         }
     }
 
+    public ArrayList<JobGroupImpl> listJobGroups() throws RemoteException{
+        ArrayList<JobGroupImpl> jobGroups = new ArrayList<>();
+        for(int i = 0; i < this.factoryImpl.getDb().getJobgroups().size(); i++){
+            System.out.println("listjobgroups");
+            if(this.factoryImpl.getDb().getJobgroups().get(i).getUser().equals(this.user))
+                jobGroups.add(this.factoryImpl.getDb().getJobgroups().get(i));
+        }
+        return jobGroups;
+    }
 }

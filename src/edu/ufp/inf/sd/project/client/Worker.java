@@ -5,6 +5,7 @@ import edu.ufp.inf.sd.project.server.JobGroupImpl;
 import edu.ufp.inf.sd.project.util.geneticalgorithm.CrossoverStrategies;
 
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -12,7 +13,7 @@ public class Worker
 {
     int workerID;
     String uname;
-    JobGroupImpl jobGroup;
+    ArrayList<JobGroupImpl> jobGroup = new ArrayList<>();
 
     public Worker(int workerID, String uname) {
         this.workerID = workerID;
@@ -20,15 +21,16 @@ public class Worker
     }
 
     public void workTS(JobGroupImpl jobGroup, FactoryRI factoryRI) throws RemoteException {
-        this.jobGroup = jobGroup;
+        this.jobGroup.add(jobGroup);
 
-        if(this.jobGroup.getStrategy().equals("TS")) {
+        if(jobGroup.getStrategy().equals("TS")) {
             //============ Call TS remote service ============
             String jsspInstancePath = jobGroup.getJoburl();
             int makespan = factoryRI.runTS(jsspInstancePath);
             Logger.getLogger(this.getClass().getName()).log(Level.INFO,
                     "[TS] Makespan for {0} = {1}",
                     new Object[]{jsspInstancePath, String.valueOf(makespan)});
+            factoryRI.getDb().getJobGroup(jobGroup.getJobId()).saveResults(this.workerID, makespan);
         }else{
             /*//============ Call GA ============
             String queue = "jssp_ga";
