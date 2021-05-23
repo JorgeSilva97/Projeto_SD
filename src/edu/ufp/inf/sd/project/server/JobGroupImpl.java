@@ -1,8 +1,9 @@
 package edu.ufp.inf.sd.project.server;
 
-import edu.ufp.inf.sd.project.client.Worker;
+import edu.ufp.inf.sd.project.client.WorkerRI;
 
 import java.io.Serializable;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
@@ -13,18 +14,18 @@ public class JobGroupImpl implements JobGroupRI, Serializable
 
     private int jobId;
     private String user;
-    private String joburl;
+    private String jobUrl;
     private String strategy;
     private int state; // 1 - Ativo, 2 - Pausado, 0 - Finalizado
     private int credits;
     private int bestResult;
     //array de workers disponiveis
-    ArrayList<Worker> workers = new ArrayList<>();
+    private ArrayList<WorkerRI> workerRI = new ArrayList<>();
     HashMap<Integer, Integer> results = new HashMap<>();
 
     public JobGroupImpl(String user, String joburl, String strategy, int credits) {
         this.user = user;
-        this.joburl = joburl;
+        this.jobUrl = joburl;
         this.strategy = strategy;
         this.credits = credits;
         this.state = 1;
@@ -35,17 +36,29 @@ public class JobGroupImpl implements JobGroupRI, Serializable
         this.state = state;
     }
 
-    public void saveResults(Integer workId, Integer result){
+    public void saveResults(Integer workId, Integer result) throws RemoteException {
         this.results.put(workId, result);
         if(this.bestResult < result)
             this.bestResult = result;
 
         Logger.getLogger(this.getClass().getName()).log(Level.INFO,
-                "[JobGroup] Result {0} from Worker -> {1}\n successfully saved!",
+                "[JobGroup] Result {0} from Worker -> {1} successfully saved!",
                 new Object[]{result,workId});
+        notifyAllworkers(result,workId);
     }
 
-    public String getUser() {
+    public void addWorkers(WorkerRI wRI) throws RemoteException {
+        this.workerRI.add(wRI);
+        wRI.workTSS(this);
+    }
+
+    public void notifyAllworkers(int result, int workiD) throws RemoteException {
+        for(WorkerRI workerRI : this.workerRI){
+            workerRI.update(result, workiD);
+        }
+    }
+
+    public String getUser() throws RemoteException {
         return user;
     }
 
@@ -53,12 +66,12 @@ public class JobGroupImpl implements JobGroupRI, Serializable
         this.user = user;
     }
 
-    public String getJoburl() {
-        return joburl;
+    public String getJobUrl() {
+        return jobUrl;
     }
 
-    public void setJoburl(String joburl) {
-        this.joburl = joburl;
+    public void setJobUrl(String jobUrl) {
+        this.jobUrl = jobUrl;
     }
 
     public int getJobId() {
@@ -77,12 +90,16 @@ public class JobGroupImpl implements JobGroupRI, Serializable
         this.strategy = strategy;
     }
 
+    public ArrayList<WorkerRI> getWorkerRI() {
+        return workerRI;
+    }
+
     @Override
     public String toString() {
         return "JobGroupImpl{" +
                 "jobId=" + jobId +
                 ", user='" + user + '\'' +
-                ", joburl='" + joburl + '\'' +
+                ", joburl='" + jobUrl + '\'' +
                 ", strategy='" + strategy + '\'' +
                 '}';
     }

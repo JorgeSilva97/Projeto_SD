@@ -1,6 +1,5 @@
 package edu.ufp.inf.sd.project.server;
 
-import edu.ufp.inf.sd.project.client.Worker;
 import edu.ufp.inf.sd.project.util.rmisetup.SetupContextRMI;
 
 import java.io.FileInputStream;
@@ -8,7 +7,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.rmi.registry.Registry;
-import java.util.ArrayList;
 import java.util.Properties;
 import java.util.function.BiConsumer;
 import java.util.logging.Level;
@@ -36,7 +34,7 @@ public class JobShopServer {
     /**
      * Remote interface that will hold reference MAIL_TO_ADDR the Servant impl
      */
-    private FactoryRI jobShopRI;
+    private JobShopFactoryRI jobShopRI;
 
 
 
@@ -84,7 +82,7 @@ public class JobShopServer {
             //Bind service on rmiregistry and wait for calls
             if (registry != null) {
                 //============ Create Servant ============
-                jobShopRI = new FactoryImpl();
+                jobShopRI = new JobShopFactoryImpl();
 
                 //Get service url (including servicename)
                 String serviceUrl = contextRMI.getServicesUrl(0);

@@ -1,73 +1,96 @@
 package edu.ufp.inf.sd.project.server;
 
+import edu.ufp.inf.sd.project.client.WorkerImpl;
+import edu.ufp.inf.sd.project.client.WorkerRI;
+
+import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
-public class SessionImpl extends UnicastRemoteObject implements SessionRI {
+public class SessionImpl extends UnicastRemoteObject implements SessionRI, Serializable {
 
-    private int id;
-    private FactoryImpl factoryImpl;
-    private String user;
+    //private DBMockup db;
+    private User user;
+    private JobShopFactoryRI jobShopFactoryRI;
     //ArrayList<JobGroupImpl> jobs = new ArrayList<>();
 
 
-    public SessionImpl(FactoryImpl factoryImpl, String uname) throws RemoteException {
+    public SessionImpl(User uname, JobShopFactoryRI jobShopFactoryRI) throws RemoteException {
         super();
         this.user = uname;
-        this.factoryImpl = factoryImpl;
+        this.jobShopFactoryRI = jobShopFactoryRI;
     }
 
     //getjobgroups
 
     @Override
     public void logout(String uname) throws RemoteException {
-        if (this.factoryImpl.getDb().getSessions().containsKey(uname)) {
-            this.factoryImpl.getDb().getSessions().remove(uname);
+        if (this.jobShopFactoryRI.getDb().getSessions().containsKey(uname)) {
+            this.jobShopFactoryRI.getDb().getSessions().remove(uname);
             Logger.getLogger(this.getClass().getName()).log(Level.INFO, "LOGOUT efetuado pelo Utilizador @ {0}", uname);
         }
     }
 
 
-    public JobGroupImpl createJobGroup(String uname, String path, String strategy) throws RemoteException {
-        for (User u : factoryImpl.getDb().getUsers()) {
-            if (u.getUname().compareTo(uname) == 0 && u.getCredits() >= 100) {
-                u.setCredits(u.getCredits() - 100);
-                JobGroupImpl jobGroup = new JobGroupImpl(uname, path, strategy, 100);
-                jobGroup.setJobId(this.factoryImpl.getDb().getJobgroups().size() + 1);
-                this.factoryImpl.getDb().addJobGroup(jobGroup);
+    public boolean createJobGroup(String path, String strategy) throws RemoteException {
+            if (this.user.getCredits() >= 100) {
+                user.setCredits(user.getCredits() - 100);
+                JobGroupImpl jobGroup = new JobGroupImpl(this.user.getUname(), path, strategy, 100);
+                jobGroup.setJobId(jobShopFactoryRI.getDb().getJobgroups().size() + 1);
+                this.jobShopFactoryRI.getDb().addJobGroup(jobGroup);
                 //u.addCredits(100);
-                return jobGroup;
+                return true;
             }
-        }
-        return null;
+        return false;
     }
+
+    public void associateWorkers(int workerID, String uname, int jobID) throws RemoteException{
+            this.jobShopFactoryRI.getDb().addWorkers(jobID, new WorkerImpl(workerID, uname));
+        }
 
     @Override
     public void removeJobGroup(String uname, int jobId) throws RemoteException {
-        for (User u : factoryImpl.getDb().getUsers()) {
-            if (u.getUname().compareTo(uname) == 0) {
-                if (this.factoryImpl.getDb().getJobgroups().containsKey(jobId)) {
-                    JobGroupImpl jobGroup = this.factoryImpl.getDb().getJobgroups().get(jobId);
+        {
+                if (jobShopFactoryRI.getDb().getJobgroups().containsKey(jobId)) {
+                    JobGroupRI jobGroup = jobShopFactoryRI.getDb().getJobgroups().get(jobId);
                     if (jobGroup.getUser().equals(uname)) {
-                        this.factoryImpl.getDb().removeJobGroup(jobId);
+                        jobShopFactoryRI.getDb().removeJobGroup(jobId);
                     }
                 }
-            }
         }
     }
 
-    public ArrayList<JobGroupImpl> listJobGroups() throws RemoteException{
-        ArrayList<JobGroupImpl> jobGroups = new ArrayList<>();
-        for(int i = 0; i < this.factoryImpl.getDb().getJobgroups().size(); i++){
+    public ArrayList<JobGroupRI> listJobGroups() throws RemoteException{
+        ArrayList<JobGroupRI> jobGroups = new ArrayList<>();
+        for(int i = 0; i < jobShopFactoryRI.getDb().getJobgroups().size(); i++){
             System.out.println("listjobgroups");
-            if(this.factoryImpl.getDb().getJobgroups().get(i).getUser().equals(this.user))
-                jobGroups.add(this.factoryImpl.getDb().getJobgroups().get(i));
+            jobGroups.add(jobShopFactoryRI.getDb().getJobgroups().get(i + 1));
+            System.out.println(jobGroups);
         }
         return jobGroups;
+    }
+
+    public void changeJobGroupState(int jobID, int state) throws RemoteException{
+        this.jobShopFactoryRI.getDb().getJobGroup(jobID).changeState(state);
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public JobShopFactoryRI getJobShopFactoryImpl() throws RemoteException {
+        return jobShopFactoryRI;
+    }
+
+    public void setJobShopFactoryImpl(JobShopFactoryImpl jobShopFactoryImpl) {
+        this.jobShopFactoryRI = jobShopFactoryImpl;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 }

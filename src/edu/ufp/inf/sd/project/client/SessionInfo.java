@@ -8,14 +8,12 @@ import java.rmi.RemoteException;
 public class SessionInfo {
     private String username;
     private SessionRI sessionRI;
-    private DBMockup db;
 
 
     public SessionInfo(SessionRI sessionRI, String username) throws RemoteException {
         super();
         this.sessionRI = sessionRI;
         this.username = username;
-        db = new DBMockup();
     }
 
     public String getUsername() {

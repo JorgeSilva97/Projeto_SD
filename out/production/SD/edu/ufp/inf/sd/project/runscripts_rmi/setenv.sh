@@ -25,7 +25,7 @@ export USERNAME=ricardo
 
 #@REM ==== JAVA NAMING STUFF ====
 export JAVAPROJ_NAME=SD
-export JAVAPROJ=/home/${USERNAME}/Documentos/${JAVAPROJ_NAME}
+export JAVAPROJ=/home/${USERNAME}/Desktop/${JAVAPROJ_NAME}
 
 export PACKAGE=project
 export PACKAGE_PREFIX=edu.ufp.inf.sd

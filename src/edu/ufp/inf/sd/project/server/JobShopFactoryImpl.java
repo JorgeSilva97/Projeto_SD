@@ -1,21 +1,20 @@
 package edu.ufp.inf.sd.project.server;
 
-import edu.ufp.inf.sd.project.client.Worker;
+import edu.ufp.inf.sd.project.client.JobShopClientRI;
 import edu.ufp.inf.sd.project.util.tabusearch.TabuSearchJSSP;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
-public class FactoryImpl extends UnicastRemoteObject implements FactoryRI {
+public class JobShopFactoryImpl extends UnicastRemoteObject implements JobShopFactoryRI {
 
     private DBMockup db;
 
-    public FactoryImpl() throws RemoteException
+    public JobShopFactoryImpl() throws RemoteException
     {
         super();
         this.db = new DBMockup();
@@ -51,26 +50,28 @@ public class FactoryImpl extends UnicastRemoteObject implements FactoryRI {
     {
         if (db.exists(uname, pword))
         {
-            if (!this.getDb().getSessions().containsKey(uname))
+            if (!this.db.getSessions().containsKey(uname))
             {
                 Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Sessão iniciada com sucesso!");
-                SessionRI sessionRI = new SessionImpl(this, uname);
-                this.getDb().getSessions().put(uname, sessionRI);
+                SessionRI sessionRI = new SessionImpl(new User(uname,pword), this);
+                this.db.getSessions().put(uname, sessionRI);
                 return sessionRI;
             }
             else
             {
                 Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Sessão já iniciada!");
-                return this.getDb().getSessions().get(uname);
+                return this.db.getSessions().get(uname);
             }
 
         }
         return null;
     }
 
+    public DBMockup getDb() throws RemoteException {
+        return db;
+    }
 
-    public DBMockup getDb()
-    {
-        return this.db;
+    public void setDb(DBMockup db) {
+        this.db = db;
     }
 }
