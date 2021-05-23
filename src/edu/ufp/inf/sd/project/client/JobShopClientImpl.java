@@ -1,0 +1,221 @@
+package edu.ufp.inf.sd.project.client;
+
+import edu.ufp.inf.sd.project.server.JobGroupImpl;
+import edu.ufp.inf.sd.project.server.JobGroupRI;
+import edu.ufp.inf.sd.project.server.JobShopFactoryRI;
+import edu.ufp.inf.sd.project.server.SessionRI;
+import edu.ufp.inf.sd.project.util.rmisetup.SetupContextRMI;
+
+import java.rmi.NotBoundException;
+import java.rmi.Remote;
+import java.rmi.RemoteException;
+import java.rmi.registry.Registry;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+public class JobShopClientImpl implements JobShopClientRI{
+
+    private SetupContextRMI contextRMI;
+    /**
+     * Remote interface that will hold the Servant proxy
+     */
+    private JobShopFactoryRI jobShopFactoryRI;
+    private SessionRI sessionRI = null;
+
+    private ArrayList<WorkerRI> workerRI;
+    
+
+    public JobShopClientImpl(SetupContextRMI contextRMI) throws RemoteException {
+        this.workerRI = new ArrayList<>();
+        this.contextRMI = contextRMI;
+        lookupService();
+        Remote exportObject = java.rmi.server.UnicastRemoteObject.exportObject(this, 0);
+    }
+
+    private Remote lookupService() {
+        try {
+            //Get proxy MAIL_TO_ADDR rmiregistry
+            Registry registry = contextRMI.getRegistry();
+            //Lookup service on rmiregistry and wait for calls
+            if (registry != null) {
+                //Get service url (including servicename)
+                String serviceUrl = contextRMI.getServicesUrl(0);
+                Logger.getLogger(this.getClass().getName()).log(Level.INFO, "going MAIL_TO_ADDR lookup service @ {0}", serviceUrl);
+
+
+                //============ Get proxy MAIL_TO_ADDR HelloWorld service ============
+                jobShopFactoryRI = (JobShopFactoryRI) registry.lookup(serviceUrl);
+            } else {
+                Logger.getLogger(this.getClass().getName()).log(Level.INFO, "registry not bound (check IPs). :(");
+                //registry = LocateRegistry.createRegistry(1099);
+            }
+        } catch (RemoteException | NotBoundException ex) {
+            Logger.getLogger(this.getClass().getName()).log(Level.SEVERE, null, ex);
+        }
+        return jobShopFactoryRI;
+    }
+
+    public void playService() {
+        try {
+            /*//============ Call TS remote service ============
+            String jsspInstancePath = "edu/ufp/inf/sd/project/data/la01.txt";
+            int makespan = this.factoryRI.runTS(jsspInstancePath);
+            Logger.getLogger(this.getClass().getName()).log(Level.INFO,
+                    "[TS] Makespan for {0} = {1}",
+                    new Object[]{jsspInstancePath,String.valueOf(makespan)});
+
+
+            //============ Call GA ============
+            String queue = "jssp_ga";
+            String resultsQueue = queue + "_results";
+            CrossoverStrategies strategy = CrossoverStrategies.ONE;
+            Logger.getLogger(this.getClass().getName()).log(Level.INFO,
+                    "GA is running for {0}, check queue {1}",
+                    new Object[]{jsspInstancePath,resultsQueue});
+            GeneticAlgorithmJSSP ga = new GeneticAlgorithmJSSP(jsspInstancePath, queue, strategy);
+            ga.run();*/
+
+            //==========================================================================================================
+
+            /*this.factoryRI.register("jorge", "ufp");
+
+            SessionRI sessionRI = this.factoryRI.login("jorge", "ufp");
+
+            if (sessionRI != null)
+            {
+                //CRIAR JOB'S
+
+            }*/
+
+            String username, pw;
+            System.out.println("1 - Register and Login");
+            System.out.println("2 - Login");
+
+            //SCAN FOR OPTION
+            Scanner myObj = new Scanner(System.in);
+            String opt = myObj.nextLine();
+
+            switch (opt){
+                case "1":
+                    System.out.print("Username: ");
+                    username = myObj.nextLine();
+                    System.out.print("Password: ");
+                    pw = myObj.nextLine();
+                    jobShopFactoryRI.register(username,pw);
+                    sessionRI = jobShopFactoryRI.login(username,pw);
+                    menu();
+                    break;
+                case "2":
+                    System.out.print("Username: ");
+                    username = myObj.nextLine();
+                    System.out.print("Password: ");
+                    pw = myObj.nextLine();
+                    sessionRI = jobShopFactoryRI.login(username,pw);
+                    menu();
+                    break;
+            }
+
+
+
+            Logger.getLogger(this.getClass().getName()).log(Level.INFO, "going MAIL_TO_ADDR finish, GOODBYE. ;)");
+
+        } catch (RemoteException ex) {
+            Logger.getLogger(this.getClass().getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void menu() throws RemoteException {
+
+        while (this.sessionRI.getJobShopFactoryImpl().getDb().getSessions().containsKey(this.sessionRI.getUser().getUname())) {
+
+            System.out.println("User: " + this.sessionRI.getUser().getUname() + "\tCredits: " + this.sessionRI.getUser().getCredits() + "\n");
+            System.out.println("1 - Create JobGroup");
+            System.out.println("2 - List JobGroup");
+            System.out.println("3 - Join JobGroup");
+            System.out.println("4 - Delete JobGroup");
+            System.out.println("5 - Pause JobGroup");
+            System.out.println("6 - Logout");
+
+            Scanner myObj = new Scanner(System.in);
+            String opt = myObj.nextLine();
+
+            switch (opt) {
+                //CREATE TASK
+                case "1":
+                    System.out.println("What strategy do you want to use? (1 - TS or 2 - GA)");
+                    String opt2 = myObj.nextLine();
+
+                    if (opt2.compareTo("1") == 0 || opt2.compareTo("2") == 0) {
+                        System.out.println("Path to file");
+                        String path = myObj.nextLine();
+                        if (opt2.compareTo("1") == 0)
+                            this.sessionRI.createJobGroup(path, "TS");
+                        else
+                            this.sessionRI.createJobGroup(path, "GA");
+
+                    }
+                    System.out.println();
+                    break;
+                //LIST JobGroups
+                case "2":
+                    System.out.println("Jobs: ");
+                    for (JobGroupRI me : this.sessionRI.listJobGroups()) {
+                        System.out.println("Key: " + me.getJobId() + " & Value: " + me);
+                    }
+
+                    break;
+                //JOIN JobGroup
+                case "3":
+                    System.out.println("How many workers do you want to make available?");
+                    int workers = myObj.nextInt();
+                    // Criar workers
+                    for (JobGroupRI me : this.sessionRI.listJobGroups()) {
+                        System.out.println("Key: " + me.getJobId() + " & Value: " + me);
+                    }
+                    System.out.println("What Job do you want to join?");
+                    int jobId = myObj.nextInt();
+
+                    createWorkers(workers, jobId);
+
+                    break;
+                    //DELETE TASK
+                case "4":
+                    System.out.print("Which Job do you want to delete? ");
+                    if(!this.sessionRI.listJobGroups().isEmpty()) {
+                        System.out.println(this.sessionRI.listJobGroups());
+                    }
+                    jobId = myObj.nextInt();
+                    this.sessionRI.removeJobGroup(this.sessionRI.getUser().getUname(),jobId);
+                    System.out.println("Job removed");
+                    break;
+                //PAUSE TASK
+                case "5":
+                    System.out.println("Which task do you want to pause? ");
+                    if(!this.sessionRI.listJobGroups().isEmpty()) {
+                        System.out.println(this.sessionRI.listJobGroups());
+                    }
+                    jobId = myObj.nextInt();
+                    this.sessionRI.changeJobGroupState(jobId,2);
+                    break;
+                //LOGOUT
+                case "6":
+                    this.sessionRI.logout(this.sessionRI.getUser().getUname());
+                    break;
+            }
+        }
+    }
+
+    private void createWorkers(int workers, int jobId) throws RemoteException{
+        int workersSize = this.sessionRI.getJobShopFactoryImpl().getDb().getWorkers().size();
+        for (int i = 0; i < workers; i++) {
+            WorkerRI workerRI = new WorkerImpl(workersSize + i, this.sessionRI.getUser().getUname());
+            this.sessionRI.associateWorkers(workerRI.getWorkerID(),this.sessionRI.getUser().getUname(), jobId);
+            this.workerRI.add(workerRI);
+            //workerRI.workTS(this.sessionRI.getDb().getJobgroups().get(jobId), sessionRI, this.jobShopFactoryRI);
+        }
+    }
+
+}
