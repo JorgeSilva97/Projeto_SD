@@ -11,10 +11,10 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.Registry;
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 
 public class JobShopClientImpl implements JobShopClientRI{
 
@@ -106,6 +106,7 @@ public class JobShopClientImpl implements JobShopClientRI{
                     pw = myObj.nextLine();
                     jobShopFactoryRI.register(username,pw);
                     sessionRI = jobShopFactoryRI.login(username,pw);
+                    sessionRI.associateClient(this);
                     menu();
                     break;
                 case "2":
@@ -114,6 +115,7 @@ public class JobShopClientImpl implements JobShopClientRI{
                     System.out.print("Password: ");
                     pw = myObj.nextLine();
                     sessionRI = jobShopFactoryRI.login(username,pw);
+                    sessionRI.associateClient(this);
                     menu();
                     break;
             }
@@ -133,11 +135,12 @@ public class JobShopClientImpl implements JobShopClientRI{
 
             System.out.println("User: " + this.sessionRI.getUser().getUname() + "\tCredits: " + this.sessionRI.getUser().getCredits() + "\n");
             System.out.println("1 - Create JobGroup");
-            System.out.println("2 - List JobGroup");
-            System.out.println("3 - Join JobGroup");
-            System.out.println("4 - Delete JobGroup");
-            System.out.println("5 - Pause JobGroup");
-            System.out.println("6 - Logout");
+            System.out.println("2 - Start JobGroup");
+            System.out.println("3 - List JobGroup");
+            System.out.println("4 - Join JobGroup");
+            System.out.println("5 - Delete JobGroup");
+            System.out.println("6 - Pause JobGroup");
+            System.out.println("7 - Logout");
 
             Scanner myObj = new Scanner(System.in);
             String opt = myObj.nextLine();
@@ -159,7 +162,7 @@ public class JobShopClientImpl implements JobShopClientRI{
                     }
                     System.out.println();
                     break;
-                //LIST JobGroups
+                //Start JobGroup
                 case "2":
                     System.out.println("Jobs: ");
                     for (JobGroupRI me : this.sessionRI.listJobGroups()) {
@@ -167,8 +170,16 @@ public class JobShopClientImpl implements JobShopClientRI{
                     }
 
                     break;
-                //JOIN JobGroup
+                //LIST JobGroups
                 case "3":
+                    System.out.println("Jobs: ");
+                    for (JobGroupRI me : this.sessionRI.listJobGroups()) {
+                        System.out.println("Key: " + me.getJobId() + " & Value: " + me);
+                    }
+
+                    break;
+                //JOIN JobGroup
+                case "4":
                     System.out.println("How many workers do you want to make available?");
                     int workers = myObj.nextInt();
                     // Criar workers
@@ -182,7 +193,7 @@ public class JobShopClientImpl implements JobShopClientRI{
 
                     break;
                     //DELETE TASK
-                case "4":
+                case "5":
                     System.out.print("Which Job do you want to delete? ");
                     if(!this.sessionRI.listJobGroups().isEmpty()) {
                         System.out.println(this.sessionRI.listJobGroups());
@@ -192,7 +203,7 @@ public class JobShopClientImpl implements JobShopClientRI{
                     System.out.println("Job removed");
                     break;
                 //PAUSE TASK
-                case "5":
+                case "6":
                     System.out.println("Which task do you want to pause? ");
                     if(!this.sessionRI.listJobGroups().isEmpty()) {
                         System.out.println(this.sessionRI.listJobGroups());
@@ -201,21 +212,27 @@ public class JobShopClientImpl implements JobShopClientRI{
                     this.sessionRI.changeJobGroupState(jobId,2);
                     break;
                 //LOGOUT
-                case "6":
+                case "7":
                     this.sessionRI.logout(this.sessionRI.getUser().getUname());
                     break;
             }
         }
     }
 
+    //Criar workers com thread.poll
     private void createWorkers(int workers, int jobId) throws RemoteException{
         int workersSize = this.sessionRI.getJobShopFactoryImpl().getDb().getWorkers().size();
         for (int i = 0; i < workers; i++) {
-            WorkerRI workerRI = new WorkerImpl(workersSize + i, this.sessionRI.getUser().getUname());
-            this.sessionRI.associateWorkers(workerRI.getWorkerID(),this.sessionRI.getUser().getUname(), jobId);
-            this.workerRI.add(workerRI);
+            WorkerImpl workerImpl = new WorkerImpl(workersSize + i, this.sessionRI.getUser().getUname(), this);
+            //enVIAR O worker já criado para o server
+            this.sessionRI.associateWorkers(workerImpl, jobId);
+            this.workerRI.add(workerImpl);
             //workerRI.workTS(this.sessionRI.getDb().getJobgroups().get(jobId), sessionRI, this.jobShopFactoryRI);
         }
+    }
+
+    public void getState(String error) throws RemoteException{
+        System.out.println(error);
     }
 
 }

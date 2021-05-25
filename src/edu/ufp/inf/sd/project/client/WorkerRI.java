@@ -13,5 +13,7 @@ public interface WorkerRI extends Remote, Serializable {
     public void workTS(JobGroupImpl jobGroup, SessionRI sessionRI, JobShopFactoryRI jobShopFactoryRI) throws RemoteException;
     public void workTSS(JobGroupRI jobGroup) throws RemoteException;
     public void update(int value, int workerID) throws RemoteException;
+    public void getState(String error) throws RemoteException;
+    public void associateJobGroup(JobGroupRI jobGroup) throws RemoteException;
     public int getWorkerID() throws RemoteException;
 }

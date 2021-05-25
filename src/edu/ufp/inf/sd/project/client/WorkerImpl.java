@@ -12,21 +12,22 @@ import java.util.logging.Logger;
 
 public class WorkerImpl implements WorkerRI {
     private int workerID;
+    private JobShopClientRI jobShopClientRI;
     private String uname;
-    private ArrayList<JobGroupRI> jobGroups = new ArrayList<>();
+    private JobGroupRI jobGroups;
 
-    public WorkerImpl(int workerID, String uname) {
+    public WorkerImpl(int workerID, String uname, JobShopClientRI jobShopClientRI) {
+        this.jobShopClientRI = jobShopClientRI;
         this.workerID = workerID;
         this.uname = uname;
     }
 
     public void workTSS(JobGroupRI jobGroup) throws RemoteException{
-        System.out.println(jobGroup);
+
         jobGroup.saveResults(this.workerID, 2302);
     }
 
     public void workTS(JobGroupImpl jobGroup, SessionRI sessionRI, JobShopFactoryRI jobShopFactoryRI) throws RemoteException {
-        this.jobGroups.add(jobGroup);
 
         if(jobGroup.getStrategy().equals("TS")) {
             //============ Call TS remote service ============
@@ -53,8 +54,16 @@ public class WorkerImpl implements WorkerRI {
         return workerID;
     }
 
+    public void associateJobGroup(JobGroupRI jobGroup) throws RemoteException{
+        this.jobGroups = jobGroup;
+    }
+
     @Override
     public void update(int value, int workerID) throws RemoteException {
         System.out.println("New Value Received! ->" + value + "from: worker-" + workerID);
+    }
+
+    public void getState(String error) throws RemoteException{
+        this.jobShopClientRI.getState(error);
     }
 }

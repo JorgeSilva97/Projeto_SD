@@ -6,4 +6,5 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 
 public interface JobShopClientRI extends Remote {
+    public void getState(String error) throws RemoteException;
 }
