@@ -164,18 +164,14 @@ public class JobShopClientImpl implements JobShopClientRI{
                     break;
                 //Start JobGroup
                 case "2":
-                    System.out.println("Jobs: ");
-                    for (JobGroupRI me : this.sessionRI.listJobGroups()) {
-                        System.out.println("Key: " + me.getJobId() + " & Value: " + me);
-                    }
-
+                    printJobs();
+                    System.out.println("What Job do you want to start?");
+                    opt2 = myObj.nextLine();
+                    this.sessionRI.changeJobGroupState(Integer.parseInt(opt2),1);
                     break;
                 //LIST JobGroups
                 case "3":
-                    System.out.println("Jobs: ");
-                    for (JobGroupRI me : this.sessionRI.listJobGroups()) {
-                        System.out.println("Key: " + me.getJobId() + " & Value: " + me);
-                    }
+                    printJobs();
 
                     break;
                 //JOIN JobGroup
@@ -219,15 +215,20 @@ public class JobShopClientImpl implements JobShopClientRI{
         }
     }
 
+    private void printJobs() throws RemoteException {
+        System.out.println("Jobs: ");
+        for (JobGroupRI me : this.sessionRI.listJobGroups()) {
+            System.out.println("Key: " + me.getJobId() + " & Value: " + me);
+        }
+    }
+
     //Criar workers com thread.poll
     private void createWorkers(int workers, int jobId) throws RemoteException{
-        int workersSize = this.sessionRI.getJobShopFactoryImpl().getDb().getWorkers().size();
+        int workersSize = this.sessionRI.getWorkersSize();
         for (int i = 0; i < workers; i++) {
             WorkerImpl workerImpl = new WorkerImpl(workersSize + i, this.sessionRI.getUser().getUname(), this);
-            //enVIAR O worker já criado para o server
             this.sessionRI.associateWorkers(workerImpl, jobId);
             this.workerRI.add(workerImpl);
-            //workerRI.workTS(this.sessionRI.getDb().getJobgroups().get(jobId), sessionRI, this.jobShopFactoryRI);
         }
     }
 
@@ -235,4 +236,13 @@ public class JobShopClientImpl implements JobShopClientRI{
         System.out.println(error);
     }
 
+    public void stopWorker(int workerId, int jobGroupId) throws RemoteException{
+        System.out.println("O worker - " + workerId + "acabou o seu serviço no Job -" + jobGroupId + "e vai ser desligado");
+        this.workerRI.remove(workerId);
+    }
+
+    public void addCredits(int credits, int workerId) throws RemoteException{
+        this.sessionRI.getUser().addCredits(credits);
+        System.out.println("Worker -> " + workerId + "recebeu " + credits + "creditos");
+    }
 }

@@ -52,6 +52,7 @@ public class SessionImpl extends UnicastRemoteObject implements SessionRI, Seria
 
     public void associateWorkers(WorkerRI workerRI, int jobID) throws RemoteException {
         this.jobShopFactoryImpl.getDb().getJobGroup(jobID).addWorkers(workerRI);
+        this.jobShopFactoryImpl.getDb().getWorkers().add(workerRI);
         //this.jobShopFactoryImpl.getDb().addWorkers(jobID, workerRI);
         workerRI.associateJobGroup(this.jobShopFactoryImpl.getDb().getJobGroup(jobID));
     }
@@ -94,6 +95,10 @@ public class SessionImpl extends UnicastRemoteObject implements SessionRI, Seria
 
     public void changeJobGroupState(int jobID, int state) throws RemoteException {
         this.jobShopFactoryImpl.getDb().getJobGroup(jobID).changeState(state);
+    }
+
+    public int getWorkersSize() throws RemoteException{
+       return this.jobShopFactoryImpl.getDb().getWorkers().size();
     }
 
     public User getUser() {

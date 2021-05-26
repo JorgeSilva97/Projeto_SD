@@ -4,6 +4,7 @@ import edu.ufp.inf.sd.project.server.JobGroupRI;
 import edu.ufp.inf.sd.project.server.JobShopFactoryRI;
 import edu.ufp.inf.sd.project.server.JobGroupImpl;
 import edu.ufp.inf.sd.project.server.SessionRI;
+import edu.ufp.inf.sd.project.util.tabusearch.TabuSearchJSSP;
 
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -23,20 +24,22 @@ public class WorkerImpl implements WorkerRI {
     }
 
     public void workTSS(JobGroupRI jobGroup) throws RemoteException{
-
         jobGroup.saveResults(this.workerID, 2302);
     }
 
-    public void workTS(JobGroupImpl jobGroup, SessionRI sessionRI, JobShopFactoryRI jobShopFactoryRI) throws RemoteException {
+    public void workTS(JobGroupImpl jobGroup) throws RemoteException {
 
         if(jobGroup.getStrategy().equals("TS")) {
             //============ Call TS remote service ============
-            String jsspInstancePath = jobGroup.getJobUrl();
-            int makespan = jobShopFactoryRI.runTS(jsspInstancePath);
-            Logger.getLogger(this.getClass().getName()).log(Level.INFO,
-                    "[TS] Makespan for {0} = {1}",
-                    new Object[]{jsspInstancePath, String.valueOf(makespan)});
-            sessionRI.getJobShopFactoryImpl().getDb().getJobGroup(jobGroup.getJobId()).saveResults(this.workerID, makespan);
+            String path = jobGroup.getJobUrl();
+
+            TabuSearchJSSP ts = new TabuSearchJSSP(path);
+            int makespan = ts.run();
+
+            Logger.getLogger(this.getClass().getName()).log(Level.INFO, "[TS] Makespan for {0} = {1}", new Object[]{path,String.valueOf(makespan)});
+
+            this.jobGroups.saveResults(this.workerID, makespan);
+
         }else{
             /*//============ Call GA ============
             String queue = "jssp_ga";
@@ -48,6 +51,14 @@ public class WorkerImpl implements WorkerRI {
             GeneticAlgorithmJSSP ga = new GeneticAlgorithmJSSP(jsspInstancePath, queue, strategy);
             ga.run();*/
         }
+    }
+
+    public void stopWorkers() throws RemoteException{
+        this.jobShopClientRI.stopWorker(this.workerID, this.jobGroups.getJobId());
+    }
+
+    public void addCredits(int credits) throws RemoteException{
+        this.jobShopClientRI.addCredits(credits, this.getWorkerID());
     }
 
     public int getWorkerID() throws RemoteException {

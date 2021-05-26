@@ -2,11 +2,13 @@ package edu.ufp.inf.sd.project.server;
 
 import edu.ufp.inf.sd.project.client.JobShopClientRI;
 import edu.ufp.inf.sd.project.client.WorkerRI;
+import edu.ufp.inf.sd.project.util.threading.ThreadPool;
 
 import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -37,22 +39,43 @@ public class JobGroupImpl implements JobGroupRI, Serializable
 
     public void changeState(int state) throws RemoteException {
         this.state = state;
+        // State 1 = começar trabalho
         if(state == 1){
+            //Criação de threads para chamar os workers todos ao mesmo tempo
+            ThreadPool threadPool = new ThreadPool(this.workerRI.size());
+            ArrayList<JobGroupRunnable> jobGroupRunnables = new ArrayList<>();
             for(WorkerRI wRI : workerRI){
-                wRI.workTSS(this);
+                JobGroupRunnable jgR = new JobGroupRunnable(wRI, this);
+                jobGroupRunnables.add(jgR);
+            }
+
+            for(JobGroupRunnable jobGroupRunnable : jobGroupRunnables){
+                threadPool.execute(jobGroupRunnable);
             }
         }
+        else if(state == 0){
+            for(WorkerRI wRI : workerRI){
+                wRI.stopWorkers();
+            }
+        }
+
     }
 
     public void saveResults(Integer workId, Integer result) throws RemoteException {
         this.results.put(workId, result);
-        if(this.bestResult < result)
-            this.bestResult = result;
-
         Logger.getLogger(this.getClass().getName()).log(Level.INFO,
                 "[JobGroup] Result {0} from Worker -> {1} successfully saved!",
                 new Object[]{result,workId});
-        //nao notificar quando receber, notificar depois de ter a melhor decisºao
+
+        // significa que todos os workers enviaram o resultado
+        if(this.results.size() == this.workerRI.size()){
+            for (Map.Entry<Integer, Integer> entry : results.entrySet()) {
+                if(this.bestResult < entry.getValue()){
+                    this.bestResult = entry.getValue();
+                }
+            }
+            notifyAllworkers();
+        }
     }
 
     //Verificar se existe saldo suficiente para a inserção de mais workers
@@ -68,9 +91,16 @@ public class JobGroupImpl implements JobGroupRI, Serializable
         //enviar trabalho para os workers
     }
 
-    public void notifyAllworkers(int result, int workiD) throws RemoteException {
+    public void notifyAllworkers() throws RemoteException {
         for(WorkerRI workerRI : this.workerRI){
-            workerRI.update(result, workiD);
+            if(this.bestResult == this.results.get(workerRI.getWorkerID())){
+                workerRI.addCredits(10);
+                this.credits -= 10;
+            }else{
+                workerRI.addCredits(1);
+                this.credits -= 1;
+            }
+            workerRI.getState("O melhor resultado para o Job: " + this.getJobId() + "foi = " + this.bestResult);
         }
     }
 

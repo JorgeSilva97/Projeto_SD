@@ -24,7 +24,7 @@ public interface SessionRI extends Remote {
 
     public void associateClient(JobShopClientRI clientRI) throws RemoteException;
     public void associateWorkers(WorkerRI workerRI, int jobID) throws RemoteException;
-
+    public int getWorkersSize() throws RemoteException;
     public JobShopFactoryRI getJobShopFactoryImpl() throws RemoteException;
     public void changeJobGroupState(int jobID, int state) throws RemoteException;
     }
