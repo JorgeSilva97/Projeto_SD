@@ -1,111 +1,211 @@
 package edu.ufp.inf.sd.project.consumer;
 
-/**
- * Consumer will keep running to listen for messages from queue and print them out.
- * 
- * DefaultConsumer is a class implementing the Consumer interface, used to buffer 
- * the messages pushed to us by the server.
- * 
- * Compile with RabbitMQ java client on the classpath:
- *  javac -cp amqp-client-4.0.2.jar RPCServer.java RPCClient.java
- * 
- * Run with need rabbitmq-client.jar and its dependencies on the classpath.
- *  java -cp .:amqp-client-4.0.2.jar:slf4j-api-1.7.21.jar:slf4j-simple-1.7.22.jar Recv
- *  java -cp .:amqp-client-4.0.2.jar:slf4j-api-1.7.21.jar:slf4j-simple-1.7.22.jar Producer
- * 
- * OR
- * export CP=.:amqp-client-4.0.2.jar:slf4j-api-1.7.21.jar:slf4j-simple-1.7.22.jar
- * java -cp $CP Producer
- * java -cp %CP% Producer
- * 
- * The client will print the message it gets from the publisher via RabbitMQ.
- * The client will keep running, waiting for messages (Use Ctrl-C to stop it).
- * Try running the publisher from another terminal.
- *
- * Check RabbitMQ Broker runtime info (credentials: guest/guest4rabbitmq):
- *  http://localhost:15672/
- * 
- * 
- * @author rui
- */
-
-
 import com.rabbitmq.client.*;
-import edu.ufp.inf.sd.project.producer.Producer;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.util.Scanner;
+import java.util.concurrent.TimeoutException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-
+/**
+ * RabbitMQ speaks multiple protocols. This tutorial uses AMQP 0-9-1, which is
+ * an open, general-purpose protocol for messaging. There are a number of
+ * clients for RabbitMQ in many different languages. We'll use the Java client
+ * provided by RabbitMQ.
+ * <p>
+ * Download client library (amqp-client-4.0.2.jar) and its dependencies (SLF4J
+ * API and SLF4J Simple) and copy them into lib directory.
+ * <p>
+ * Jargon terms:
+ * RabbitMQ is a message broker, i.e., a server that accepts and forwards messages.
+ * Producer is a program that sends messages (Producing means sending).
+ * Queue is a post box which lives inside a RabbitMQ broker (large message buffer).
+ * Consumer is a program that waits to receive messages (Consuming means receiving).
+ * The server, client and broker do not have to reside on the same host
+ *
+ * @author rui
+ */
 public class Consumer {
 
-    //private final static String QUEUE_NAME = "helloqueue";
+    /*+ name of the queue */
+    public final static String QUEUE_NAME="jssp_ga";
+    public final static String QUEUE_JOB="jssp_job";
 
-    public static void main(String[] argv) throws Exception {
-        try {
-            /* Open a connection and a channel, and declare the queue from which to consume.
-            Declare the queue here, as well, because we might start the client before the publisher. */
-            DBMockup db = new DBMockup();
-            ConnectionFactory factory = new ConnectionFactory();
-            factory.setHost("localhost");
-            //Use same username/passwd as the for accessing Management UI @ http://localhost:15672/
-            //Default credentials are: guest/guest (change accordingly)
-            factory.setUsername("guest");
-            factory.setPassword("guest");
-            //factory.setPassword("guest4rabbitmq");
-            Connection connection=factory.newConnection();
-            Channel channel=connection.createChannel();
-            Channel channelCoord=connection.createChannel();
+    public static void main(String[] argv) {
+        //Connection connection=null;
+        //Channel channel=null;
 
-            String resultsQueue = Producer.QUEUE_NAME + "_results";
-            //String coordenatorQueue = Producer.QUEUE_JOB + "_results";
+        /* Create a connection to the server (abstracts the socket connection,
+           protocol version negotiation and authentication, etc.) */
+        ConnectionFactory factory=new ConnectionFactory();
+        factory.setHost("localhost");
+        factory.setUsername("guest");
+        factory.setPassword("guest");
+        //factory.setPassword("guest4rabbitmq");
 
-            channel.queueDeclare(resultsQueue, true, false, false, null);
-            //channel.exchangeDeclare(resultsQueue, BuiltinExchangeType.DIRECT);
-            //channel.queueDeclare(Producer.QUEUE_NAME, false, false, false, null);
-            //channelCoord.queueDeclare(Producer.QUEUE_JOB, false, false, false, null);
-            //channelCoord.exchangeDeclare(coordenatorQueue, BuiltinExchangeType.DIRECT);
-            System.out.println(" [*] Waiting for messages. To exit press CTRL+C");
+        /* try-with-resources\. will close resources automatically in reverse order... avoids finally */
+        try (//Create a channel, which is where most of the API resides
+             Connection connection=factory.newConnection();
+             Channel channel=connection.createChannel();
+        ) {
+            /* We must declare a queue to send to; this is idempotent, i.e.,
+            it will only be created if it doesn't exist already;
+            then we can publish a message to the queue; The message content is a
+            byte array (can encode whatever we need). */
+            channel.queueDeclare(QUEUE_NAME, false, false, false, null);
 
-             //The server pushes messages asynchronously, hence we provide a
-            //DefaultConsumer callback that will buffer the messages until we're ready to use them.
-            DefaultConsumer client = new DefaultConsumer(channel) {
-                @Override
-                public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException, UnsupportedEncodingException {
-                    String message=new String(body, "UTF-8");
-                    System.out.println(" [x] Connection received' [" + message + "]'");
-                    String reply= null;
-                    if(db.getUser(message) != null){
-                        reply = "Found";
-                    }else
-                    reply= "Not Found";
+            //declarar outra queue para comunicação entre coordenador e servidor
+            //channelCoord.queueDeclare(QUEUE_JOB, false, false, false, null);
+            //channelCoord.exchangeDeclare(QUEUE_JOB, BuiltinExchangeType.DIRECT);
 
-                    channel.basicPublish("Direct", " ", null, reply.getBytes("UTF-8"));
-                }
-            };
-            channel.basicConsume(Producer.QUEUE_NAME, true, client);
+            //channel.queueDeclare(QUEUE_NAME, true, false, false, null);
 
-            /*DefaultConsumer clientCoord = new DefaultConsumer(channelCoord){
+            menu(channel, connection);
+
+            // Change strategy to CrossoverStrategies.TWO
+            sendMessage(channel, connection.getId());
+            Thread.currentThread().sleep(2000);
+
+            DefaultConsumer client = new DefaultConsumer(channel){
                 @Override
                 public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
                     String message= new String(body, "UTF-8");
-                    System.out.println(" [x] Received from Coord'" + message + "'");
-                    String m = "Received!";
-                    //channelCoord.basicPublish("", coordenatorQueue, null, m.getBytes("UTF-8"));
+                    System.out.println(" [x] Received from Server['" + message + "']");
+
+                    //menu(channel, connection);
                 }
             };
-            channelCoord.basicConsume(Producer.QUEUE_JOB, true, clientCoord);*/
+            channel.basicConsume(QUEUE_NAME, true, client);
+
+            // Change strategy to CrossoverStrategies.THREE
+            //sendMessage(channel, String.valueOf(CrossoverStrategies.THREE.strategy));
+            //Thread.currentThread().sleep(2000);
 
 
-            /*DeliverCallback deliverCallback = (consumerTag, delivery) -> {
-                String message = new String(delivery.getBody(), "UTF-8");
-                System.out.println(" [x] Received '" + message + "'");
-            };
-            channel.basicConsume(resultsQueue, true, deliverCallback, consumerTag -> { });*/
+            //sendJobGroup(channelCoord);
 
-        } catch (Exception e){
-            //Logger.getLogger(Recv.class.getName()).log(Level.INFO, e.toString());
-            e.printStackTrace();
+            // Stop the GA
+            //sendMessage(channel, "stop");
+
+        } catch (IOException | TimeoutException | InterruptedException e) {
+            Logger.getLogger(Consumer.class.getName()).log(Level.INFO, e.toString());
+        } /* The try-with-resources will close resources automatically in reverse order
+            finally {
+            try {
+                // Lastly, we close the channel and the connection
+                if (channel != null) { channel.close(); }
+                if (connection != null) { connection.close(); }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } */
+    }
+
+    public static void menu(Channel channel, Connection connection) throws IOException {
+
+        System.out.println("1 - Create JobGroup");
+        System.out.println("2 - Start JobGroup");
+        System.out.println("3 - List JobGroup");
+        System.out.println("4 - Join JobGroup");
+        System.out.println("5 - Delete JobGroup");
+        System.out.println("6 - Pause JobGroup");
+        System.out.println("7 - Logout");
+
+        Scanner myObj = new Scanner(System.in);
+        String opt = myObj.nextLine();
+
+        switch (opt) {
+            //CREATE TASK
+            case "1":
+                sendJobGroup(channel);
+
+                break;
+            //Start JobGroup
+            /*case "2":
+                printJobs();
+                System.out.println("What Job do you want to start?");
+                opt2 = myObj.nextLine();
+                this.sessionRI.changeJobGroupState(Integer.parseInt(opt2), 1);
+                break;
+            //LIST JobGroups
+            case "3":
+                printJobs();
+
+                break;
+            //JOIN JobGroup
+            case "4":
+                System.out.println("How many workers do you want to make available?");
+                int workers = myObj.nextInt();
+                // Criar workers
+                for (JobGroupRI me : this.sessionRI.listJobGroups()) {
+                    System.out.println("Key: " + me.getJobId() + " & Value: " + me);
+                }
+                System.out.println("What Job do you want to join?");
+                int jobId = myObj.nextInt();
+
+                createWorkers(workers, jobId);
+
+                break;
+            //DELETE TASK
+            case "5":
+                System.out.print("Which Job do you want to delete? ");
+                if (!this.sessionRI.listJobGroups().isEmpty()) {
+                    System.out.println(this.sessionRI.listJobGroups());
+                }
+                jobId = myObj.nextInt();
+                this.sessionRI.removeJobGroup(this.sessionRI.getUser().getUname(), jobId);
+                System.out.println("Job removed");
+                break;
+            //PAUSE TASK
+            case "6":
+                System.out.println("Which task do you want to pause? ");
+                if (!this.sessionRI.listJobGroups().isEmpty()) {
+                    System.out.println(this.sessionRI.listJobGroups());
+                }
+                jobId = myObj.nextInt();
+                this.sessionRI.changeJobGroupState(jobId, 2);
+                break;
+            //LOGOUT
+            case "7":
+                this.sessionRI.logout(this.sessionRI.getUser().getUname());
+                break;*/
         }
+    }
+
+
+    public static void sendMessage(Channel channel, String message) throws IOException {
+        System.out.println("Indique o seu nome");
+        Scanner myObj = new Scanner(System.in);
+        String name = myObj.nextLine();
+        channel.basicPublish("", QUEUE_NAME, null, name.getBytes("UTF-8"));
+        System.out.println(" [x] Nome enviado para o servidor '" + name + "', aguarde resposta!");
+
+    }
+
+    public static void sendJobGroup(Channel  channel) throws IOException {
+        Scanner myObj = new Scanner(System.in);
+        System.out.println("Path to file");
+        String path = myObj.nextLine();
+
+        System.out.println("Credits: ");
+        String credits = myObj.nextLine();
+        Integer cred = Integer.parseInt(credits);
+        String message = path + ";" + credits;
+
+        channel.basicPublish("", QUEUE_NAME, null, message.getBytes("UTF-8"));
+        System.out.println(" [x] Sent new JobGroup'" + message + "'");
+
+        channel.queueBind(QUEUE_NAME,QUEUE_NAME + "_results", "123");
+
+        DefaultConsumer client = new DefaultConsumer(channel){
+            @Override
+            public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+                String message= new String(body, "UTF-8");
+                System.out.println(" [x] Received from Server'" + message + "'");
+            }
+        };
+        channel.basicConsume(QUEUE_NAME, true, client);
+
     }
 }

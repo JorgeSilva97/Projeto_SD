@@ -1,4 +1,4 @@
-package edu.ufp.inf.sd.project.consumer;
+package edu.ufp.inf.sd.project.producer;
 
 import edu.ufp.inf.sd.project.client.WorkerRI;
 import edu.ufp.inf.sd.project.server.JobGroupImpl;
