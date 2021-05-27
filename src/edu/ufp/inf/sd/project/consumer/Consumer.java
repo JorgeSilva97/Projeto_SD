@@ -30,11 +30,11 @@ package edu.ufp.inf.sd.project.consumer;
  */
 
 
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.DeliverCallback;
+import com.rabbitmq.client.*;
 import edu.ufp.inf.sd.project.producer.Producer;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 
 public class Consumer {
@@ -45,6 +45,7 @@ public class Consumer {
         try {
             /* Open a connection and a channel, and declare the queue from which to consume.
             Declare the queue here, as well, because we might start the client before the publisher. */
+            DBMockup db = new DBMockup();
             ConnectionFactory factory = new ConnectionFactory();
             factory.setHost("localhost");
             //Use same username/passwd as the for accessing Management UI @ http://localhost:15672/
@@ -54,30 +55,53 @@ public class Consumer {
             //factory.setPassword("guest4rabbitmq");
             Connection connection=factory.newConnection();
             Channel channel=connection.createChannel();
+            Channel channelCoord=connection.createChannel();
 
             String resultsQueue = Producer.QUEUE_NAME + "_results";
+            //String coordenatorQueue = Producer.QUEUE_JOB + "_results";
 
-            channel.queueDeclare(resultsQueue, false, false, false, null);
-            //channel.queueDeclare(Producer.QUEUE_NAME, true, false, false, null);
+            channel.queueDeclare(resultsQueue, true, false, false, null);
+            //channel.exchangeDeclare(resultsQueue, BuiltinExchangeType.DIRECT);
+            //channel.queueDeclare(Producer.QUEUE_NAME, false, false, false, null);
+            //channelCoord.queueDeclare(Producer.QUEUE_JOB, false, false, false, null);
+            //channelCoord.exchangeDeclare(coordenatorQueue, BuiltinExchangeType.DIRECT);
             System.out.println(" [*] Waiting for messages. To exit press CTRL+C");
 
-            /* The server pushes messages asynchronously, hence we provide a
-            DefaultConsumer callback that will buffer the messages until we're ready to use them.
-            Consumer client = new DefaultConsumer(channel) {
+             //The server pushes messages asynchronously, hence we provide a
+            //DefaultConsumer callback that will buffer the messages until we're ready to use them.
+            DefaultConsumer client = new DefaultConsumer(channel) {
                 @Override
-                public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+                public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException, UnsupportedEncodingException {
                     String message=new String(body, "UTF-8");
-                    System.out.println(" [x] Received '" + message + "'");
+                    System.out.println(" [x] Connection received' [" + message + "]'");
+                    String reply= null;
+                    if(db.getUser(message) != null){
+                        reply = "Found";
+                    }else
+                    reply= "Not Found";
+
+                    channel.basicPublish("Direct", " ", null, reply.getBytes("UTF-8"));
                 }
             };
-            channel.basicConsume(Producer.QUEUE_NAME, true, client    );
-            */
+            channel.basicConsume(Producer.QUEUE_NAME, true, client);
 
-            DeliverCallback deliverCallback = (consumerTag, delivery) -> {
+            /*DefaultConsumer clientCoord = new DefaultConsumer(channelCoord){
+                @Override
+                public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+                    String message= new String(body, "UTF-8");
+                    System.out.println(" [x] Received from Coord'" + message + "'");
+                    String m = "Received!";
+                    //channelCoord.basicPublish("", coordenatorQueue, null, m.getBytes("UTF-8"));
+                }
+            };
+            channelCoord.basicConsume(Producer.QUEUE_JOB, true, clientCoord);*/
+
+
+            /*DeliverCallback deliverCallback = (consumerTag, delivery) -> {
                 String message = new String(delivery.getBody(), "UTF-8");
                 System.out.println(" [x] Received '" + message + "'");
             };
-            channel.basicConsume(resultsQueue, true, deliverCallback, consumerTag -> { });
+            channel.basicConsume(resultsQueue, true, deliverCallback, consumerTag -> { });*/
 
         } catch (Exception e){
             //Logger.getLogger(Recv.class.getName()).log(Level.INFO, e.toString());

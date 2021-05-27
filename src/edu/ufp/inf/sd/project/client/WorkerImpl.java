@@ -1,24 +1,23 @@
 package edu.ufp.inf.sd.project.client;
 
 import edu.ufp.inf.sd.project.server.JobGroupRI;
-import edu.ufp.inf.sd.project.server.JobShopFactoryRI;
 import edu.ufp.inf.sd.project.server.JobGroupImpl;
-import edu.ufp.inf.sd.project.server.SessionRI;
 import edu.ufp.inf.sd.project.util.tabusearch.TabuSearchJSSP;
 
+import java.io.*;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
+import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class WorkerImpl implements WorkerRI {
     private int workerID;
-    private JobShopClientRI jobShopClientRI;
+    private JobShopClientRI owner;
     private String uname;
     private JobGroupRI jobGroups;
 
     public WorkerImpl(int workerID, String uname, JobShopClientRI jobShopClientRI) {
-        this.jobShopClientRI = jobShopClientRI;
+        this.owner = jobShopClientRI;
         this.workerID = workerID;
         this.uname = uname;
     }
@@ -27,11 +26,11 @@ public class WorkerImpl implements WorkerRI {
         jobGroup.saveResults(this.workerID, 2302);
     }
 
-    public void workTS(JobGroupImpl jobGroup) throws RemoteException {
+    public void workTS(String path) throws RemoteException {
 
-        if(jobGroup.getStrategy().equals("TS")) {
+        //if(jobGroup.getStrategy().equals("TS")) {
             //============ Call TS remote service ============
-            String path = jobGroup.getJobUrl();
+            //String path = jobGroup.getJobUrl();
 
             TabuSearchJSSP ts = new TabuSearchJSSP(path);
             int makespan = ts.run();
@@ -40,7 +39,7 @@ public class WorkerImpl implements WorkerRI {
 
             this.jobGroups.saveResults(this.workerID, makespan);
 
-        }else{
+        //}else{
             /*//============ Call GA ============
             String queue = "jssp_ga";
             String resultsQueue = queue + "_results";
@@ -50,15 +49,15 @@ public class WorkerImpl implements WorkerRI {
                     new Object[]{jsspInstancePath,resultsQueue});
             GeneticAlgorithmJSSP ga = new GeneticAlgorithmJSSP(jsspInstancePath, queue, strategy);
             ga.run();*/
-        }
+       // }
     }
 
     public void stopWorkers() throws RemoteException{
-        this.jobShopClientRI.stopWorker(this.workerID, this.jobGroups.getJobId());
+        this.owner.stopWorker(this.workerID, this.jobGroups.getJobId());
     }
 
     public void addCredits(int credits) throws RemoteException{
-        this.jobShopClientRI.addCredits(credits, this.getWorkerID());
+        this.owner.addCredits(credits, this.getWorkerID());
     }
 
     public int getWorkerID() throws RemoteException {
@@ -74,7 +73,30 @@ public class WorkerImpl implements WorkerRI {
         System.out.println("New Value Received! ->" + value + "from: worker-" + workerID);
     }
 
-    public void getState(String error) throws RemoteException{
-        this.jobShopClientRI.getState(error);
+    public synchronized void getPath(String path) throws IOException {
+        File f = this.jobGroups.downloadFile(path);
+        File file = new File("/home/ricardo/Desktop/SD/src/edu/ufp/inf/sd/project/client/files/"+ jobGroups.getJobId() + ".txt");
+
+        if(!file.exists()) {
+            Writer output = null;
+            output = new BufferedWriter(new FileWriter(file));
+
+            Scanner myReader = new Scanner(f);
+            while (myReader.hasNextLine()) {
+                output.write(myReader.nextLine());
+                output.write('\n');
+            }
+            output.close();
+        }
+        //this.workTS(path);
+    }
+
+     public synchronized void getState(String error) throws RemoteException{
+        this.owner.getState(error);
+    }
+
+    public void startWork() throws RemoteException{
+        String path = "/home/ricardo/Desktop/SD/src/edu/ufp/inf/sd/project/client/files/"+ this.jobGroups.getJobId() + ".txt";
+        this.workTS(path);
     }
 }

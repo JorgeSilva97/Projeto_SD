@@ -4,6 +4,8 @@ import edu.ufp.inf.sd.project.client.JobShopClientRI;
 import edu.ufp.inf.sd.project.client.WorkerImpl;
 import edu.ufp.inf.sd.project.client.WorkerRI;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -50,11 +52,11 @@ public class SessionImpl extends UnicastRemoteObject implements SessionRI, Seria
         return false;
     }
 
-    public void associateWorkers(WorkerRI workerRI, int jobID) throws RemoteException {
+    public void associateWorkers(WorkerRI workerRI, int jobID) throws IOException {
         this.jobShopFactoryImpl.getDb().getJobGroup(jobID).addWorkers(workerRI);
         this.jobShopFactoryImpl.getDb().getWorkers().add(workerRI);
         //this.jobShopFactoryImpl.getDb().addWorkers(jobID, workerRI);
-        workerRI.associateJobGroup(this.jobShopFactoryImpl.getDb().getJobGroup(jobID));
+        //workerRI.associateJobGroup(this.jobShopFactoryImpl.getDb().getJobGroup(jobID));
     }
 
     public void associateClient(JobShopClientRI clientRI) throws RemoteException{
@@ -93,7 +95,7 @@ public class SessionImpl extends UnicastRemoteObject implements SessionRI, Seria
         return jobGroups;
     }
 
-    public void changeJobGroupState(int jobID, int state) throws RemoteException {
+    public void changeJobGroupState(int jobID, int state) throws IOException {
         this.jobShopFactoryImpl.getDb().getJobGroup(jobID).changeState(state);
     }
 

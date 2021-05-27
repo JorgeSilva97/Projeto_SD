@@ -4,6 +4,8 @@ import edu.ufp.inf.sd.project.client.JobShopClientRI;
 import edu.ufp.inf.sd.project.client.WorkerImpl;
 import edu.ufp.inf.sd.project.client.WorkerRI;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -23,8 +25,8 @@ public interface SessionRI extends Remote {
     public User getUser() throws RemoteException;
 
     public void associateClient(JobShopClientRI clientRI) throws RemoteException;
-    public void associateWorkers(WorkerRI workerRI, int jobID) throws RemoteException;
+    public void associateWorkers(WorkerRI workerRI, int jobID) throws IOException;
     public int getWorkersSize() throws RemoteException;
     public JobShopFactoryRI getJobShopFactoryImpl() throws RemoteException;
-    public void changeJobGroupState(int jobID, int state) throws RemoteException;
+    public void changeJobGroupState(int jobID, int state) throws IOException;
     }

@@ -1,11 +1,13 @@
-package edu.ufp.inf.sd.project.server;
+package edu.ufp.inf.sd.project.consumer;
 
-import edu.ufp.inf.sd.project.client.WorkerImpl;
 import edu.ufp.inf.sd.project.client.WorkerRI;
+import edu.ufp.inf.sd.project.server.JobGroupImpl;
+import edu.ufp.inf.sd.project.server.JobGroupRI;
+import edu.ufp.inf.sd.project.server.SessionRI;
+import edu.ufp.inf.sd.project.server.User;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
 

@@ -5,7 +5,10 @@ import edu.ufp.inf.sd.project.server.JobGroupRI;
 import edu.ufp.inf.sd.project.server.JobShopFactoryRI;
 import edu.ufp.inf.sd.project.server.SessionRI;
 import edu.ufp.inf.sd.project.util.rmisetup.SetupContextRMI;
+import edu.ufp.inf.sd.project.util.threading.ThreadPool;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.rmi.NotBoundException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -124,12 +127,14 @@ public class JobShopClientImpl implements JobShopClientRI{
 
             Logger.getLogger(this.getClass().getName()).log(Level.INFO, "going MAIL_TO_ADDR finish, GOODBYE. ;)");
 
-        } catch (RemoteException ex) {
+        } catch (RemoteException | FileNotFoundException ex) {
             Logger.getLogger(this.getClass().getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
-    private void menu() throws RemoteException {
+    private void menu() throws IOException {
 
         while (this.sessionRI.getJobShopFactoryImpl().getDb().getSessions().containsKey(this.sessionRI.getUser().getUname())) {
 
@@ -223,18 +228,32 @@ public class JobShopClientImpl implements JobShopClientRI{
     }
 
     //Criar workers com thread.poll
-    private void createWorkers(int workers, int jobId) throws RemoteException{
+    private void createWorkers(int workers, int jobId) throws IOException {
+        //create workers com threads
+
         int workersSize = this.sessionRI.getWorkersSize();
+        ThreadPool threadPool = new ThreadPool(workers);
+        ArrayList<WorkerRunnable> workersTh = new ArrayList<>();
+
         for (int i = 0; i < workers; i++) {
-            WorkerImpl workerImpl = new WorkerImpl(workersSize + i, this.sessionRI.getUser().getUname(), this);
-            this.sessionRI.associateWorkers(workerImpl, jobId);
-            this.workerRI.add(workerImpl);
+            //WorkerImpl workerImpl = new WorkerImpl(workersSize + i, this.sessionRI.getUser().getUname(), this);
+            //this.sessionRI.associateWorkers(workerImpl, jobId);
+            //this.workerRI.add(workerImpl);
+            WorkerRunnable wR = new WorkerRunnable(workersSize + i, this.sessionRI.getUser().getUname(), this.sessionRI, this);
+            threadPool.execute(wR);
+            this.sessionRI.associateWorkers(wR.workerRI, jobId);
+            this.workerRI.add(wR.workerRI);
         }
+    }
+
+    public void addWorker(WorkerRI workerRI) throws RemoteException{
+        this.workerRI.add(workerRI);
     }
 
     public void getState(String error) throws RemoteException{
         System.out.println(error);
     }
+
 
     public void stopWorker(int workerId, int jobGroupId) throws RemoteException{
         System.out.println("O worker - " + workerId + "acabou o seu serviço no Job -" + jobGroupId + "e vai ser desligado");
