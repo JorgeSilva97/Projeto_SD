@@ -53,7 +53,15 @@ public class Consumer {
             it will only be created if it doesn't exist already;
             then we can publish a message to the queue; The message content is a
             byte array (can encode whatever we need). */
+
             channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+
+
+            //channel.queueDeclare(QUEUE_NAME + "_results", true,false, false, null);
+            //channel.queueBind(QUEUE_NAME + "_results", QUEUE_NAME, "");
+
+            String consExch = "consExch";
+            //channel.exchangeDeclare(consExch, BuiltinExchangeType.DIRECT);
 
             //declarar outra queue para comunicação entre coordenador e servidor
             //channelCoord.queueDeclare(QUEUE_JOB, false, false, false, null);
@@ -61,13 +69,14 @@ public class Consumer {
 
             //channel.queueDeclare(QUEUE_NAME, true, false, false, null);
 
-            menu(channel, connection);
+            //sendJobGroup(channel);
+            menu(channel);
 
             // Change strategy to CrossoverStrategies.TWO
-            sendMessage(channel, connection.getId());
+            //sendMessage(channel, connection.getId());
             Thread.currentThread().sleep(2000);
 
-            DefaultConsumer client = new DefaultConsumer(channel){
+            /*DefaultConsumer client = new DefaultConsumer(channel){
                 @Override
                 public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
                     String message= new String(body, "UTF-8");
@@ -76,7 +85,7 @@ public class Consumer {
                     //menu(channel, connection);
                 }
             };
-            channel.basicConsume(QUEUE_NAME, true, client);
+            channel.basicConsume(QUEUE_NAME, true, client);*/
 
             // Change strategy to CrossoverStrategies.THREE
             //sendMessage(channel, String.valueOf(CrossoverStrategies.THREE.strategy));
@@ -102,7 +111,7 @@ public class Consumer {
         } */
     }
 
-    public static void menu(Channel channel, Connection connection) throws IOException {
+    public static void menu(Channel channel) throws IOException {
 
         System.out.println("1 - Create JobGroup");
         System.out.println("2 - Start JobGroup");
@@ -127,14 +136,14 @@ public class Consumer {
                 System.out.println("What Job do you want to start?");
                 opt2 = myObj.nextLine();
                 this.sessionRI.changeJobGroupState(Integer.parseInt(opt2), 1);
-                break;
+                break;*/
             //LIST JobGroups
             case "3":
-                printJobs();
+                getJobs(channel);
 
                 break;
             //JOIN JobGroup
-            case "4":
+            /*case "4":
                 System.out.println("How many workers do you want to make available?");
                 int workers = myObj.nextInt();
                 // Criar workers
@@ -174,13 +183,39 @@ public class Consumer {
     }
 
 
-    public static void sendMessage(Channel channel, String message) throws IOException {
-        System.out.println("Indique o seu nome");
+    public static void getJobs(Channel channel) throws IOException {
         Scanner myObj = new Scanner(System.in);
+        System.out.println("Name");
         String name = myObj.nextLine();
-        channel.basicPublish("", QUEUE_NAME, null, name.getBytes("UTF-8"));
-        System.out.println(" [x] Nome enviado para o servidor '" + name + "', aguarde resposta!");
 
+        System.out.println("Password:");
+        String pass = myObj.nextLine();
+
+        String message =";jobs;" + name + ";" + pass + ";";
+
+        channel.basicPublish("", QUEUE_NAME, null, message.getBytes("UTF-8"));
+        System.out.println(" [x] Nome enviado para o servidor '" + message + "', aguarde resposta!");
+
+        getProducerReply(channel, name);
+
+    }
+
+    private static void getProducerReply(Channel channel, String name) throws IOException {
+        channel.queueDeclare(name, false, false, false, null);
+        channel.exchangeDeclare("producer", BuiltinExchangeType.DIRECT);
+        channel.queueBind(name, "producer", name);
+
+        final String[] reply = {null};
+        do{
+            DefaultConsumer client = new DefaultConsumer(channel) {
+                @Override
+                public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+                    reply[0] = new String(body, "UTF-8");
+                    System.out.println(" [x] Received from Server'" + reply[0] + "'");
+                }
+            };
+            channel.basicConsume(name,true, client);
+        }while(reply[0] == null);
     }
 
     public static void sendJobGroup(Channel  channel) throws IOException {
@@ -191,21 +226,19 @@ public class Consumer {
         System.out.println("Credits: ");
         String credits = myObj.nextLine();
         Integer cred = Integer.parseInt(credits);
-        String message = path + ";" + credits;
 
-        channel.basicPublish("", QUEUE_NAME, null, message.getBytes("UTF-8"));
+        System.out.println("Name");
+        String name = myObj.nextLine();
+
+        System.out.println("Password:");
+        String pass = myObj.nextLine();
+
+        String message = path + ";" + credits + ";" + name + ";" + pass + ";";
+
+
+        channel.basicPublish("",QUEUE_NAME, null, message.getBytes("UTF-8"));
         System.out.println(" [x] Sent new JobGroup'" + message + "'");
 
-        channel.queueBind(QUEUE_NAME,QUEUE_NAME + "_results", "123");
-
-        DefaultConsumer client = new DefaultConsumer(channel){
-            @Override
-            public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
-                String message= new String(body, "UTF-8");
-                System.out.println(" [x] Received from Server'" + message + "'");
-            }
-        };
-        channel.basicConsume(QUEUE_NAME, true, client);
-
+        getProducerReply(channel, name);
     }
 }

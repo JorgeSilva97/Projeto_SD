@@ -32,10 +32,11 @@ package edu.ufp.inf.sd.project.producer;
 
 import com.rabbitmq.client.*;
 import edu.ufp.inf.sd.project.consumer.Consumer;
-import edu.ufp.inf.sd.project.producer.DBMockup;
+import edu.ufp.inf.sd.project.server.User;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 public class Producer {
@@ -54,49 +55,91 @@ public class Producer {
             factory.setUsername("guest");
             factory.setPassword("guest");
             //factory.setPassword("guest4rabbitmq");
+            String producerExch = "producer";
+
             Connection connection=factory.newConnection();
             Channel channel=connection.createChannel();
-            Channel channelCoord=connection.createChannel();
+            channel.exchangeDeclare(producerExch, BuiltinExchangeType.DIRECT);
+            channel.queueDeclare(Consumer.QUEUE_NAME, false, false, false, null);
 
-            String resultsQueue = edu.ufp.inf.sd.project.consumer.Consumer.QUEUE_NAME + "_results";
+            String resultsQueue = Consumer.QUEUE_NAME + "_results";
+
             //String coordenatorQueue = Producer.QUEUE_JOB + "_results";
 
-            channel.queueDeclare(resultsQueue, true, false, false, null);
-            channel.exchangeDeclare(resultsQueue, BuiltinExchangeType.DIRECT);
+            //channel.queueDeclare(resultsQueue, true, false, false, null);
+
+
+            //channel.queueBind(Consumer.QUEUE_NAME + "_results", "consExch", "");
             //channel.queueDeclare(Producer.QUEUE_NAME, false, false, false, null);
             //channelCoord.queueDeclare(Producer.QUEUE_JOB, false, false, false, null);
             //channelCoord.exchangeDeclare(coordenatorQueue, BuiltinExchangeType.DIRECT);
+
             System.out.println(" [*] Waiting for messages. To exit press CTRL+C");
+
+            boolean run = true;
+            DeliverCallback deliverCallback=(consumerTag, delivery) -> {
+                String message=new String(delivery.getBody(), "UTF-8");
+                String[] parameters = message.split(";");
+                Logger.getAnonymousLogger().log(Level.INFO, Thread.currentThread().getName()+": Message received " +message);
+
+                if(parameters[0].equals("jobs")){
+                    String reply = db.getJobgroupsString();
+                    String test = "hello";
+                    channel.queueDeclare(parameters[1], false, false, false, null);
+                    channel.basicPublish("producer", parameters[1], null, test.getBytes("UTF-8"));
+
+                }else{
+                    createJobGroup(db, channel, parameters);
+                }
+                System.out.println(db.getJobgroups());
+                while (!run){
+                    try {
+                        long sleepMillis = 2000;
+                        Logger.getAnonymousLogger().log(Level.INFO, Thread.currentThread().getName()+": sleep " +sleepMillis);
+                        Thread.currentThread().sleep(sleepMillis);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            };
+            Logger.getAnonymousLogger().log(Level.INFO, Thread.currentThread().getName()+": Register Deliver Callback...");
+            //Associate callback with channel queue
+            channel.basicConsume(Consumer.QUEUE_NAME, true, deliverCallback, consumerTag -> {
+            });
 
              //The server pushes messages asynchronously, hence we provide a
             //DefaultConsumer callback that will buffer the messages until we're ready to use them.
+           /* boolean run = true;
             DefaultConsumer client = new DefaultConsumer(channel) {
                 @Override
-                public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException, UnsupportedEncodingException {
+                public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException{
                     String message=new String(body, "UTF-8");
-                    System.out.println(" [x] Connection received' [" + message + "]'");
-                    String reply= "received";
-                    /*if(db.getUser(message) != null){
-                        reply = "Found";
-                    }else
-                    reply= "Not Found";*/
+                    String[] parameters = message.split(";");
+                    Logger.getAnonymousLogger().log(Level.INFO, Thread.currentThread().getName()+": Message received " +message);
+                    System.out.println(" [x] Received '" + message + "'");
 
-                    channel.basicPublish(Consumer.QUEUE_NAME + "_results", "123", null, reply.getBytes("UTF-8"));
+                    if(parameters[0].equals("jobs")){
+                        String reply = db.getJobgroupsString();
+
+                        channel.queueDeclare(parameters[1], false, false, false, null);
+                        channel.basicPublish("Producer", parameters[1], null, reply.getBytes("UTF-8"));
+
+                    }else{
+                        createJobGroup(db, channel, parameters);
+                    }
+                    System.out.println(db.getJobgroups());
+                    while (!run){
+                        try {
+                            long sleepMillis = 2000;
+                            Logger.getAnonymousLogger().log(Level.INFO, Thread.currentThread().getName()+": sleep " +sleepMillis);
+                            Thread.currentThread().sleep(sleepMillis);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
             };
-            channel.basicConsume(Consumer.QUEUE_NAME, true, client);
-
-            /*DefaultConsumer clientCoord = new DefaultConsumer(channelCoord){
-                @Override
-                public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
-                    String message= new String(body, "UTF-8");
-                    System.out.println(" [x] Received from Coord'" + message + "'");
-                    String m = "Received!";
-                    //channelCoord.basicPublish("", coordenatorQueue, null, m.getBytes("UTF-8"));
-                }
-            };
-            channelCoord.basicConsume(Producer.QUEUE_JOB, true, clientCoord);*/
-
+            channel.basicConsume(Consumer.QUEUE_NAME, true, client);*/
 
             /*DeliverCallback deliverCallback = (consumerTag, delivery) -> {
                 String message = new String(delivery.getBody(), "UTF-8");
@@ -108,5 +151,23 @@ public class Producer {
             //Logger.getLogger(Recv.class.getName()).log(Level.INFO, e.toString());
             e.printStackTrace();
         }
+    }
+
+    private static void createJobGroup(DBMockup db, Channel channel, String[] parameters) throws IOException {
+        User user = null;
+        if(db.getUser(parameters[2]) == null){
+            user = new User(parameters[2], parameters[3]);
+        }else{
+            user = db.getUser(parameters[2]);
+        }
+
+        JobGroup jobGroup = new JobGroup(db.getJobgroups().size() + 1,user, parameters[0], "GA",2, Integer.parseInt(parameters[1]));
+        db.addJobGroup(jobGroup);
+
+        String reply = "JobGroup with id " + db.getJobgroups().size() +" created!";
+
+
+        channel.queueDeclare(parameters[2], false, false, false, null);
+        channel.basicPublish("producer", parameters[2], null, reply.getBytes("UTF-8"));
     }
 }

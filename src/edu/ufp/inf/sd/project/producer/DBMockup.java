@@ -23,7 +23,7 @@ public class DBMockup implements Serializable {
     private HashMap<String, SessionRI> sessions;
 
     //arraylist de workers
-    private HashMap<Integer, JobGroupRI> jobgroups;
+    private HashMap<Integer, JobGroup> jobgroups;
     ArrayList<WorkerRI> workerRI = new ArrayList<>();
 
     /**
@@ -68,11 +68,11 @@ public class DBMockup implements Serializable {
 
     }
 
-    public void addJobGroup(JobGroupImpl jobGroup){
+    public void addJobGroup(JobGroup jobGroup){
         this.jobgroups.put(jobGroup.getJobId(),jobGroup);
     }
 
-    public JobGroupRI getJobGroup(Integer jobId){
+    public JobGroup getJobGroup(Integer jobId){
         if(jobgroups.containsKey(jobId)){
             return jobgroups.get(jobId);
         }
@@ -85,7 +85,7 @@ public class DBMockup implements Serializable {
 
 
     public void addWorkers(Integer jobId, WorkerRI workerRI) throws IOException {
-        this.getJobgroups().get(jobId).addWorkers(workerRI);
+        //this.getJobgroups().get(jobId).addWorkers(workerRI);
         this.workerRI.add(workerRI);
     }
 
@@ -105,11 +105,20 @@ public class DBMockup implements Serializable {
         this.sessions = sessions;
     }
 
-    public HashMap<Integer, JobGroupRI> getJobgroups() {
+    public String getJobgroupsString() {
+        String jobs = null;
+        for (int i = 0; i < this.jobgroups.size(); i++) {
+            JobGroup jobGroup = this.jobgroups.get(i + 1);
+               jobs +=  this.jobgroups.get(i + 1) + "\n";
+        }
+        return jobs;
+    }
+
+    public HashMap<Integer, JobGroup> getJobgroups() {
         return jobgroups;
     }
 
-    public void setJobgroups(HashMap<Integer, JobGroupRI> jobgroups) {
+    public void setJobgroups(HashMap<Integer, JobGroup> jobgroups) {
         this.jobgroups = jobgroups;
     }
 
