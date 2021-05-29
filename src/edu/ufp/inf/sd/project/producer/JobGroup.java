@@ -1,14 +1,11 @@
 package edu.ufp.inf.sd.project.producer;
 
-import edu.ufp.inf.sd.project.client.JobShopClientRI;
-import edu.ufp.inf.sd.project.client.WorkerRI;
-import edu.ufp.inf.sd.project.server.JobGroupRI;
+import com.rabbitmq.client.BuiltinExchangeType;
+import com.rabbitmq.client.Channel;
+import edu.ufp.inf.sd.project.consumer.Worker;
 import edu.ufp.inf.sd.project.server.User;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.Serializable;
+import java.io.*;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,32 +24,31 @@ public class JobGroup
     private int credits;
     private int bestResult;
     //array de workers disponiveis
-    private ArrayList<WorkerRI> workerRI = new ArrayList<>();
+    private ArrayList<Worker> worker = new ArrayList<>();
     HashMap<Integer, Integer> results = new HashMap<>();
 
-    public JobGroup(int jobId, User user, String jobUrl, String strategy, int state, int credits) {
+    public JobGroup(int jobId, User user, String jobUrl, String strategy, int state, int credits, Channel channel) throws IOException {
         this.jobId = jobId;
         this.user = user;
         this.jobUrl = jobUrl;
         this.strategy = strategy;
         this.state = state;
         this.credits = credits;
+
+        channel.exchangeDeclare("JobGroup_" + this.jobId, BuiltinExchangeType.FANOUT);
     }
 
 
-    public void changeState(int state) throws RemoteException {
+    public void changeState(int state, Channel channel) throws IOException {
         this.state = state;
         // State 1 = começar trabalho
         if(state == 1){
-            //Enviar o caminho para os workers
-            for(WorkerRI wRI : workerRI){
-                wRI.startWork();
-            }
-
+            String reply = "url;" + this.jobUrl;
+          channel.basicPublish("JobGroup_" + this.jobId, "",null, reply.getBytes("UTF-8"));
         }
         else if(state == 0){
-            for(WorkerRI wRI : workerRI){
-                wRI.stopWorkers();
+            for(Worker wRI : worker){
+                //wRI.stopWorkers();
             }
         }
 
@@ -66,7 +62,7 @@ public class JobGroup
                 new Object[]{result,workId});
 
         // significa que todos os workers enviaram o resultado
-        if(this.results.size() == this.workerRI.size()){
+        if(this.results.size() == this.worker.size()){
             //alterar para o valor menor
             for (Map.Entry<Integer, Integer> entry : results.entrySet()) {
                 if(this.bestResult < entry.getValue()){
@@ -78,28 +74,28 @@ public class JobGroup
     }
 
     //Verificar se existe saldo suficiente para a inserção de mais workers
-    public void addWorkers(WorkerRI wRI) throws IOException {
-        if(this.credits > this.workerRI.size() + 10) {
-            this.workerRI.add(wRI);
-            wRI.getPath(this.getJobUrl());
-            wRI.getState("Worker adicionado com sucesso ao job ->" + this.getJobId() +  "!!!");
+    public void addWorkers(Worker worker) throws IOException {
+        if(this.credits > this.worker.size() + 10) {
+            this.worker.add(worker);
+            //worker.getPath(this.getJobUrl());
+            //wRI.getState("Worker adicionado com sucesso ao job ->" + this.getJobId() +  "!!!");
 
         }else{
-            wRI.getState("Não foi possivel adicionar mais workers por falta de créditos");
+            //wRI.getState("Não foi possivel adicionar mais workers por falta de créditos");
         }
         //enviar trabalho para os workers
     }
 
     public void notifyAllworkers() throws RemoteException {
-        for(WorkerRI workerRI : this.workerRI){
-            if(this.bestResult == this.results.get(workerRI.getWorkerID())){
-                workerRI.addCredits(10);
+        for(Worker worker : this.worker){
+            if(this.bestResult == this.results.get(worker.getWorkerID())){
+                //worker.addCredits(10);
                 this.credits -= 10;
             }else{
-                workerRI.addCredits(1);
+                //worker.addCredits(1);
                 this.credits -= 1;
             }
-            workerRI.getState("O melhor resultado para o Job: " + this.getJobId() + "foi = " + this.bestResult);
+            //worker.getState("O melhor resultado para o Job: " + this.getJobId() + "foi = " + this.bestResult);
         }
     }
 
@@ -110,7 +106,7 @@ public class JobGroup
         return myObj;
     }
 
-    public User getUser() throws RemoteException {
+    public User getUser(){
         return this.user;
     }
 
@@ -138,8 +134,8 @@ public class JobGroup
         this.strategy = strategy;
     }
 
-    public ArrayList<WorkerRI> getWorkerRI() {
-        return workerRI;
+    public ArrayList<Worker> getworker() {
+        return worker;
     }
 
     @Override

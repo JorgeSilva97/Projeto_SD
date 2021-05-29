@@ -1,8 +1,12 @@
 package edu.ufp.inf.sd.project.consumer;
 
 import com.rabbitmq.client.*;
+import edu.ufp.inf.sd.project.consumer.WorkerRunnable;
+import edu.ufp.inf.sd.project.util.threading.ThreadPool;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Scanner;
 import java.util.concurrent.TimeoutException;
@@ -32,8 +36,10 @@ public class Consumer {
     /*+ name of the queue */
     public final static String QUEUE_NAME="jssp_ga";
     public final static String QUEUE_JOB="jssp_job";
+    ArrayList<Worker> workers = new ArrayList<>();
 
     public static void main(String[] argv) {
+
         //Connection connection=null;
         //Channel channel=null;
 
@@ -112,7 +118,7 @@ public class Consumer {
         } */
     }
 
-    public static void menu(Channel channel) throws IOException, InterruptedException {
+    public static  void menu(Channel channel) throws IOException, InterruptedException {
         boolean session = true;
         Scanner myObj = new Scanner(System.in);
         System.out.println("Name");
@@ -143,33 +149,33 @@ public class Consumer {
                     System.out.println("out of sendJob");
                     break;
                 //Start JobGroup
-            /*case "2":
-                printJobs();
+            case "2":
+                getmyJobs(channel, name, pass);
                 System.out.println("What Job do you want to start?");
-                opt2 = myObj.nextLine();
-                this.sessionRI.changeJobGroupState(Integer.parseInt(opt2), 1);
-                break;*/
+                opt = myObj.nextLine();
+
+                startJob(channel, name, pass, Integer.parseInt(opt));
+
+                break;
                 //LIST JobGroups
                 case "3":
                     getJobs(channel, name, pass);
-                    System.out.println("out of getJobs");
                     break;
                 //JOIN JobGroup
-            /*case "4":
+            case "4":
                 System.out.println("How many workers do you want to make available?");
                 int workers = myObj.nextInt();
                 // Criar workers
-                for (JobGroupRI me : this.sessionRI.listJobGroups()) {
-                    System.out.println("Key: " + me.getJobId() + " & Value: " + me);
-                }
+                getJobs(channel, name, pass);
+                Thread.sleep(2000);
                 System.out.println("What Job do you want to join?");
                 int jobId = myObj.nextInt();
-
-                createWorkers(workers, jobId);
+                getiD(channel, name, jobId, workers);
+                //createWorkers(workers, jobId);
 
                 break;
             //DELETE TASK
-            case "5":
+            /*case "5":
                 System.out.print("Which Job do you want to delete? ");
                 if (!this.sessionRI.listJobGroups().isEmpty()) {
                     System.out.println(this.sessionRI.listJobGroups());
@@ -195,16 +201,33 @@ public class Consumer {
         }
     }
 
+    public static void startJob(Channel channel, String name, String pass, int jobiD) throws IOException {
+
+        String message ="startjob;" + name + ";" + pass + ";" + jobiD;
+
+        channel.basicPublish("", QUEUE_NAME,MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes("UTF-8"));
+
+        //System.out.println("getJobs");
+    }
 
     public static void getJobs(Channel channel, String name, String pass) throws IOException {
 
         String message ="jobs;" + name + ";" + pass + ";";
 
         channel.basicPublish("", QUEUE_NAME,MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes("UTF-8"));
-        System.out.println(" [x] Nome enviado para o servidor '" + message + "', aguarde resposta!");
 
         getProducerReply(channel, name);
-        System.out.println("getJobs");
+        //System.out.println("getJobs");
+    }
+
+    public static void getmyJobs(Channel channel, String name, String pass) throws IOException {
+
+        String message ="myjobs;" + name + ";" + pass + ";";
+
+        channel.basicPublish("", QUEUE_NAME,MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes("UTF-8"));
+
+        getProducerReply(channel, name);
+        //System.out.println("getJobs");
     }
 
     private static void getProducerReply(Channel channel, String name) throws IOException {
@@ -212,7 +235,7 @@ public class Consumer {
         boolean run = true;
         DeliverCallback deliverCallback=(consumerTag, delivery) -> {
             String message=new String(delivery.getBody(), "UTF-8");
-            System.out.println(" [x] Received from Server'" + message + "'");
+            System.out.println(" [x] Received from Server\n'" + message + "'");
 
             while (!run){
                 try {
@@ -257,5 +280,65 @@ public class Consumer {
         System.out.println(" [x] Sent new JobGroup'" + message + "'");
 
         getProducerReply(channel, name);
+    }
+
+    //Criar workers com thread.poll
+    private static void createWorkers(Channel channel, String name, int id, int jobId, String[] workers) throws IOException {
+        //create workers com threads
+
+
+        ThreadPool threadPool = new ThreadPool(workers.length);
+        ArrayList<WorkerRunnable> w = new ArrayList<>();
+        for(int i = Integer.parseInt(workers[0]); i <= Integer.parseInt(workers[workers.length - 1]); i++){
+            WorkerRunnable wR = new WorkerRunnable(jobId, channel);
+            wR.worker.setWorkerID(i);
+            w.add(wR);
+        }
+        for(int i = 0; i < workers.length; i++) {
+            threadPool.execute(w.get(i));
+        }
+        System.out.println("Workers criados!\n");
+
+        //sentWorkerToProducer(wR.worker, channel, name);
+    }
+
+    private static void sentWorkerToProducer(Worker wr, Channel channel, String name) throws IOException {
+        String message = "worker;" + name + ";" + wr.getWorkerID() + ";" + wr.getJobiD();
+
+        channel.basicPublish("",QUEUE_NAME, null, message.getBytes("UTF-8"));
+
+        getProducerReply(channel, name);
+    }
+
+    private static void getiD(Channel channel, String name, int jobId, int workers) throws IOException, InterruptedException {
+
+        String message ="getiD;" + name + ";" + jobId + ";" + workers;
+
+        channel.basicPublish("",QUEUE_NAME, null, message.getBytes("UTF-8"));
+
+        boolean run = true;
+
+        DefaultConsumer client = new DefaultConsumer(channel) {
+            @Override
+            public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException{
+                String message=new String(body, "UTF-8");
+                String[] parameters = message.split("'");
+                String[] ids = parameters[1].split(";");
+
+                System.out.println(" [x] Received from Server\n'" + message + "'");
+                createWorkers(channel, name, Integer.parseInt(parameters[1]), jobId, ids);
+
+                while (!run){
+                    try {
+                        long sleepMillis = 2000;
+                        Logger.getAnonymousLogger().log(Level.INFO, Thread.currentThread().getName()+": sleep " +sleepMillis);
+                        Thread.currentThread().sleep(sleepMillis);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        };
+        channel.basicConsume(name, true, client);
     }
 }

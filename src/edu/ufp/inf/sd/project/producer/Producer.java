@@ -32,9 +32,11 @@ package edu.ufp.inf.sd.project.producer;
 
 import com.rabbitmq.client.*;
 import edu.ufp.inf.sd.project.consumer.Consumer;
+import edu.ufp.inf.sd.project.consumer.Worker;
 import edu.ufp.inf.sd.project.server.User;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -61,6 +63,7 @@ public class Producer {
             Channel channel=connection.createChannel();
             channel.exchangeDeclare(producerExch, BuiltinExchangeType.DIRECT);
             channel.queueDeclare(Consumer.QUEUE_NAME, true, false, false, null);
+            channel.queueDeclare("Workers_results", true, false, false, null);
 
             String resultsQueue = Consumer.QUEUE_NAME + "_results";
 
@@ -126,6 +129,18 @@ public class Producer {
                         channel.basicPublish("producer", parameters[1], null, reply.getBytes("UTF-8"));
                         System.out.println("message sent to: " + parameters[1]);
 
+                    }else if(parameters[0].equals("getiD")){
+                        saveWorker(db, channel, parameters);
+
+                    }else if(parameters[0].equals("worker")){
+                        saveWorker(db, channel, parameters);
+                    }else if(parameters[0].equals("myjobs")){
+                        String reply = db.getmyJobs(parameters[1]);
+
+                        channel.basicPublish("producer", parameters[1], null, reply.getBytes("UTF-8"));
+                        System.out.println("message sent to: " + parameters[1]);
+                    }else if(parameters[0].equals("startjob")){
+                        db.getJobGroup(Integer.parseInt(parameters[3])).changeState(1, channel);
                     }else{
                         createJobGroup(db, channel, parameters);
                     }
@@ -155,6 +170,20 @@ public class Producer {
         }
     }
 
+    private static void saveWorker(DBMockup db, Channel channel, String[] parameters) throws IOException {
+       String ids = "";
+        for(int i = 1; i <= Integer.parseInt(parameters[3]); i++){
+           ids += (db.getWorkers().size() + i) + ";";
+            Worker worker = new Worker(Integer.parseInt(parameters[2]), channel);
+            worker.setWorkerID((db.getWorkers().size() + i));
+            db.addWorkers(Integer.parseInt(parameters[2]), worker);
+        }
+
+        String reply = "Workers with id's: '" + ids + "' saved on Producer!";
+        System.out.println(reply);
+        channel.basicPublish("producer", parameters[1], null, reply.getBytes("UTF-8"));
+    }
+
     private static void createJobGroup(DBMockup db, Channel channel, String[] parameters) throws IOException {
         User user = null;
         if(db.getUser(parameters[2]) == null){
@@ -163,7 +192,7 @@ public class Producer {
             user = db.getUser(parameters[2]);
         }
 
-        JobGroup jobGroup = new JobGroup(db.getJobgroups().size() + 1,user, parameters[0], "GA",2, Integer.parseInt(parameters[1]));
+        JobGroup jobGroup = new JobGroup(db.getJobgroups().size() + 1,user, parameters[0], "GA",2, Integer.parseInt(parameters[1]), channel);
         db.addJobGroup(jobGroup);
 
         String reply = "JobGroup with id " + db.getJobgroups().size() +" created!";

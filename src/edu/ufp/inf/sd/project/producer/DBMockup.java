@@ -1,6 +1,7 @@
 package edu.ufp.inf.sd.project.producer;
 
 import edu.ufp.inf.sd.project.client.WorkerRI;
+import edu.ufp.inf.sd.project.consumer.Worker;
 import edu.ufp.inf.sd.project.server.JobGroupImpl;
 import edu.ufp.inf.sd.project.server.JobGroupRI;
 import edu.ufp.inf.sd.project.server.SessionRI;
@@ -24,7 +25,7 @@ public class DBMockup implements Serializable {
 
     //arraylist de workers
     private HashMap<Integer, JobGroup> jobgroups;
-    ArrayList<WorkerRI> workerRI = new ArrayList<>();
+    ArrayList<Worker> worker = new ArrayList<>();
 
     /**
      * This constructor creates and inits the database with some books and users.
@@ -72,21 +73,32 @@ public class DBMockup implements Serializable {
         this.jobgroups.put(jobGroup.getJobId(),jobGroup);
     }
 
-    public JobGroup getJobGroup(Integer jobId){
-        if(jobgroups.containsKey(jobId)){
-            return jobgroups.get(jobId);
+    public String getmyJobs(String uname){
+        String jobs = "";
+        for (int i = 0; i < this.jobgroups.size(); i++) {
+            JobGroup jobGroup = this.jobgroups.get(i + 1);
+            if(jobGroup.getUser().getUname().equals(uname))
+            jobs += jobGroup.toString() + "\n";
         }
-        return null;
+        return jobs;
     }
 
     public void removeJobGroup(int jobId){
         this.jobgroups.remove(jobId);
     }
 
+    public JobGroup getJobGroup(int jobID){
+        for (int i = 0; i < this.jobgroups.size(); i++) {
+            JobGroup jobGroup = this.jobgroups.get(i + 1);
+            if(jobGroup.getJobId() == jobID)
+                return jobGroup;
+        }
+        return null;
+    }
 
-    public void addWorkers(Integer jobId, WorkerRI workerRI) throws IOException {
-        //this.getJobgroups().get(jobId).addWorkers(workerRI);
-        this.workerRI.add(workerRI);
+    public void addWorkers(Integer jobId, Worker worker) throws IOException {
+        this.getJobgroups().get(jobId).addWorkers(worker);
+        this.worker.add(worker);
     }
 
     public User getUser(String uname){
@@ -109,7 +121,7 @@ public class DBMockup implements Serializable {
         String jobs = "";
         for (int i = 0; i < this.jobgroups.size(); i++) {
             JobGroup jobGroup = this.jobgroups.get(i + 1);
-               jobs += jobGroup.toString();
+               jobs += jobGroup.toString() + "\n";
         }
         return jobs;
     }
@@ -122,12 +134,12 @@ public class DBMockup implements Serializable {
         this.jobgroups = jobgroups;
     }
 
-    public ArrayList<WorkerRI> getWorkers() {
-        return workerRI;
+    public ArrayList<Worker> getWorkers() {
+        return worker;
     }
 
-    public void setWorkers(ArrayList<WorkerRI> workerRI) {
-        this.workerRI = workerRI;
+    public void setWorkers(ArrayList<Worker> workerRI) {
+        this.worker = workerRI;
     }
 
     public ArrayList<User> getUsers() {
