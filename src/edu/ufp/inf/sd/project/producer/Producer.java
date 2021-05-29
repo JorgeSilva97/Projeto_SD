@@ -60,7 +60,7 @@ public class Producer {
             Connection connection=factory.newConnection();
             Channel channel=connection.createChannel();
             channel.exchangeDeclare(producerExch, BuiltinExchangeType.DIRECT);
-            channel.queueDeclare(Consumer.QUEUE_NAME, false, false, false, null);
+            channel.queueDeclare(Consumer.QUEUE_NAME, true, false, false, null);
 
             String resultsQueue = Consumer.QUEUE_NAME + "_results";
 
@@ -76,7 +76,7 @@ public class Producer {
 
             System.out.println(" [*] Waiting for messages. To exit press CTRL+C");
 
-            boolean run = true;
+            /*boolean run = true;
             DeliverCallback deliverCallback=(consumerTag, delivery) -> {
                 String message=new String(delivery.getBody(), "UTF-8");
                 String[] parameters = message.split(";");
@@ -105,11 +105,11 @@ public class Producer {
             Logger.getAnonymousLogger().log(Level.INFO, Thread.currentThread().getName()+": Register Deliver Callback...");
             //Associate callback with channel queue
             channel.basicConsume(Consumer.QUEUE_NAME, true, deliverCallback, consumerTag -> {
-            });
+            });*/
 
              //The server pushes messages asynchronously, hence we provide a
             //DefaultConsumer callback that will buffer the messages until we're ready to use them.
-           /* boolean run = true;
+            boolean run = true;
             DefaultConsumer client = new DefaultConsumer(channel) {
                 @Override
                 public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException{
@@ -117,12 +117,14 @@ public class Producer {
                     String[] parameters = message.split(";");
                     Logger.getAnonymousLogger().log(Level.INFO, Thread.currentThread().getName()+": Message received " +message);
                     System.out.println(" [x] Received '" + message + "'");
+                    System.out.println(parameters[0]);
 
                     if(parameters[0].equals("jobs")){
                         String reply = db.getJobgroupsString();
 
-                        channel.queueDeclare(parameters[1], false, false, false, null);
-                        channel.basicPublish("Producer", parameters[1], null, reply.getBytes("UTF-8"));
+                        //channel.queueDeclare(parameters[1], false, false, false, null);
+                        channel.basicPublish("producer", parameters[1], null, reply.getBytes("UTF-8"));
+                        System.out.println("message sent to: " + parameters[1]);
 
                     }else{
                         createJobGroup(db, channel, parameters);
@@ -139,7 +141,7 @@ public class Producer {
                     }
                 }
             };
-            channel.basicConsume(Consumer.QUEUE_NAME, true, client);*/
+            channel.basicConsume(Consumer.QUEUE_NAME, true, client);
 
             /*DeliverCallback deliverCallback = (consumerTag, delivery) -> {
                 String message = new String(delivery.getBody(), "UTF-8");
@@ -166,8 +168,6 @@ public class Producer {
 
         String reply = "JobGroup with id " + db.getJobgroups().size() +" created!";
 
-
-        channel.queueDeclare(parameters[2], false, false, false, null);
         channel.basicPublish("producer", parameters[2], null, reply.getBytes("UTF-8"));
     }
 }

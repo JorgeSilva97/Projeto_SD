@@ -3,6 +3,7 @@ package edu.ufp.inf.sd.project.consumer;
 import com.rabbitmq.client.*;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Scanner;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
@@ -54,7 +55,7 @@ public class Consumer {
             then we can publish a message to the queue; The message content is a
             byte array (can encode whatever we need). */
 
-            channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+            channel.queueDeclare(QUEUE_NAME, true, false, false, null);
 
 
             //channel.queueDeclare(QUEUE_NAME + "_results", true,false, false, null);
@@ -111,38 +112,49 @@ public class Consumer {
         } */
     }
 
-    public static void menu(Channel channel) throws IOException {
-
-        System.out.println("1 - Create JobGroup");
-        System.out.println("2 - Start JobGroup");
-        System.out.println("3 - List JobGroup");
-        System.out.println("4 - Join JobGroup");
-        System.out.println("5 - Delete JobGroup");
-        System.out.println("6 - Pause JobGroup");
-        System.out.println("7 - Logout");
-
+    public static void menu(Channel channel) throws IOException, InterruptedException {
+        boolean session = true;
         Scanner myObj = new Scanner(System.in);
-        String opt = myObj.nextLine();
+        System.out.println("Name");
+        String name = myObj.nextLine();
 
-        switch (opt) {
-            //CREATE TASK
-            case "1":
-                sendJobGroup(channel);
+        System.out.println("Password:");
+        String pass = myObj.nextLine();
+        channel.queueDeclare(name, false, false, true, null);
+        channel.queueBind(name, "producer", name);
 
-                break;
-            //Start JobGroup
+        while(session) {
+
+            System.out.println("1 - Create JobGroup");
+            System.out.println("2 - Start JobGroup");
+            System.out.println("3 - List JobGroup");
+            System.out.println("4 - Join JobGroup");
+            System.out.println("5 - Delete JobGroup");
+            System.out.println("6 - Pause JobGroup");
+            System.out.println("7 - Logout");
+
+            myObj = new Scanner(System.in);
+            String opt = myObj.nextLine();
+
+            switch (opt) {
+                //CREATE TASK
+                case "1":
+                    sendJobGroup(channel, name, pass);
+                    System.out.println("out of sendJob");
+                    break;
+                //Start JobGroup
             /*case "2":
                 printJobs();
                 System.out.println("What Job do you want to start?");
                 opt2 = myObj.nextLine();
                 this.sessionRI.changeJobGroupState(Integer.parseInt(opt2), 1);
                 break;*/
-            //LIST JobGroups
-            case "3":
-                getJobs(channel);
-
-                break;
-            //JOIN JobGroup
+                //LIST JobGroups
+                case "3":
+                    getJobs(channel, name, pass);
+                    System.out.println("out of getJobs");
+                    break;
+                //JOIN JobGroup
             /*case "4":
                 System.out.println("How many workers do you want to make available?");
                 int workers = myObj.nextInt();
@@ -174,38 +186,49 @@ public class Consumer {
                 }
                 jobId = myObj.nextInt();
                 this.sessionRI.changeJobGroupState(jobId, 2);
-                break;
+                break;*/
             //LOGOUT
             case "7":
-                this.sessionRI.logout(this.sessionRI.getUser().getUname());
-                break;*/
+                session = false;
+                break;
+            }
         }
     }
 
 
-    public static void getJobs(Channel channel) throws IOException {
-        Scanner myObj = new Scanner(System.in);
-        System.out.println("Name");
-        String name = myObj.nextLine();
+    public static void getJobs(Channel channel, String name, String pass) throws IOException {
 
-        System.out.println("Password:");
-        String pass = myObj.nextLine();
+        String message ="jobs;" + name + ";" + pass + ";";
 
-        String message =";jobs;" + name + ";" + pass + ";";
-
-        channel.basicPublish("", QUEUE_NAME, null, message.getBytes("UTF-8"));
+        channel.basicPublish("", QUEUE_NAME,MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes("UTF-8"));
         System.out.println(" [x] Nome enviado para o servidor '" + message + "', aguarde resposta!");
 
         getProducerReply(channel, name);
-
+        System.out.println("getJobs");
     }
 
     private static void getProducerReply(Channel channel, String name) throws IOException {
-        channel.queueDeclare(name, false, false, false, null);
-        channel.exchangeDeclare("producer", BuiltinExchangeType.DIRECT);
-        channel.queueBind(name, "producer", name);
 
-        final String[] reply = {null};
+        boolean run = true;
+        DeliverCallback deliverCallback=(consumerTag, delivery) -> {
+            String message=new String(delivery.getBody(), "UTF-8");
+            System.out.println(" [x] Received from Server'" + message + "'");
+
+            while (!run){
+                try {
+                    long sleepMillis = 2000;
+                    Logger.getAnonymousLogger().log(Level.INFO, Thread.currentThread().getName()+": sleep " +sleepMillis);
+                    Thread.currentThread().sleep(sleepMillis);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        channel.basicConsume(name, true, deliverCallback, consumerTag -> {
+        });
+
+
+        /*final String[] reply = {null};
         do{
             DefaultConsumer client = new DefaultConsumer(channel) {
                 @Override
@@ -215,26 +238,20 @@ public class Consumer {
                 }
             };
             channel.basicConsume(name,true, client);
-        }while(reply[0] == null);
+            //System.out.println(reply[0]);
+        }while(reply[0] == null);*/
+        //System.out.println("here");
     }
 
-    public static void sendJobGroup(Channel  channel) throws IOException {
+    public static void sendJobGroup(Channel  channel, String name, String pass) throws IOException {
         Scanner myObj = new Scanner(System.in);
         System.out.println("Path to file");
         String path = myObj.nextLine();
 
         System.out.println("Credits: ");
         String credits = myObj.nextLine();
-        Integer cred = Integer.parseInt(credits);
-
-        System.out.println("Name");
-        String name = myObj.nextLine();
-
-        System.out.println("Password:");
-        String pass = myObj.nextLine();
 
         String message = path + ";" + credits + ";" + name + ";" + pass + ";";
-
 
         channel.basicPublish("",QUEUE_NAME, null, message.getBytes("UTF-8"));
         System.out.println(" [x] Sent new JobGroup'" + message + "'");

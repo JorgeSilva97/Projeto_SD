@@ -106,10 +106,10 @@ public class DBMockup implements Serializable {
     }
 
     public String getJobgroupsString() {
-        String jobs = null;
+        String jobs = "";
         for (int i = 0; i < this.jobgroups.size(); i++) {
             JobGroup jobGroup = this.jobgroups.get(i + 1);
-               jobs +=  this.jobgroups.get(i + 1) + "\n";
+               jobs += jobGroup.toString();
         }
         return jobs;
     }

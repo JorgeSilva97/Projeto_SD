@@ -146,7 +146,6 @@ public class JobGroup
     public String toString() {
         return "JobGroupImpl{" +
                 "jobId=" + jobId +
-                ", user='" + user + '\'' +
                 ", joburl='" + jobUrl + '\'' +
                 ", strategy='" + strategy + '\'' +
                 '}';
