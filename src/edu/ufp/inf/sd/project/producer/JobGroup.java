@@ -39,6 +39,12 @@ public class JobGroup
     }
 
 
+    /**
+     * Alterar o estado do JobGroup
+     * @param state estado para qual vai ser alterado
+     * @param channel
+     * @throws IOException
+     */
     public void changeState(int state, Channel channel) throws IOException {
         this.state = state;
         // State 1 = começar trabalho
@@ -54,50 +60,32 @@ public class JobGroup
 
     }
 
-    // sincronizar método
+    /**
+     * Recebe resultados dos workers
+     * @param workId worker que enviou uma solução
+     * @param result resultado
+     * @throws RemoteException
+     */
     public synchronized void saveResults(Integer workId, Integer result) throws RemoteException {
-        this.results.put(workId, result);
-        Logger.getLogger(this.getClass().getName()).log(Level.INFO,
-                "[JobGroup] Result {0} from Worker -> {1} successfully saved!",
-                new Object[]{result,workId});
-
-        // significa que todos os workers enviaram o resultado
-        if(this.results.size() == this.worker.size()){
-            //alterar para o valor menor
-            for (Map.Entry<Integer, Integer> entry : results.entrySet()) {
-                if(this.bestResult < entry.getValue()){
-                    this.bestResult = entry.getValue();
-                }
-            }
-            notifyAllworkers();
-        }
+        //Função para receber os dados dos workers e guardar
     }
 
-    //Verificar se existe saldo suficiente para a inserção de mais workers
+    /**
+     * Adicionar workers ao array de workers do JobGroup
+     * @param worker
+     * @throws IOException
+     */
     public void addWorkers(Worker worker) throws IOException {
         if(this.credits > this.worker.size() + 10) {
             this.worker.add(worker);
             //worker.getPath(this.getJobUrl());
             //wRI.getState("Worker adicionado com sucesso ao job ->" + this.getJobId() +  "!!!");
-
         }else{
             //wRI.getState("Não foi possivel adicionar mais workers por falta de créditos");
         }
         //enviar trabalho para os workers
     }
 
-    public void notifyAllworkers() throws RemoteException {
-        for(Worker worker : this.worker){
-            if(this.bestResult == this.results.get(worker.getWorkerID())){
-                //worker.addCredits(10);
-                this.credits -= 10;
-            }else{
-                //worker.addCredits(1);
-                this.credits -= 1;
-            }
-            //worker.getState("O melhor resultado para o Job: " + this.getJobId() + "foi = " + this.bestResult);
-        }
-    }
 
     //objeto do ficheiro
     public File downloadFile(String path) throws FileNotFoundException, RemoteException {
@@ -136,6 +124,10 @@ public class JobGroup
 
     public ArrayList<Worker> getworker() {
         return worker;
+    }
+
+    public int getState() {
+        return state;
     }
 
     @Override

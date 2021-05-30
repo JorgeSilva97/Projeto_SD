@@ -63,36 +63,6 @@ public class JobShopClientImpl implements JobShopClientRI{
 
     public void playService() {
         try {
-            /*//============ Call TS remote service ============
-            String jsspInstancePath = "edu/ufp/inf/sd/project/data/la01.txt";
-            int makespan = this.factoryRI.runTS(jsspInstancePath);
-            Logger.getLogger(this.getClass().getName()).log(Level.INFO,
-                    "[TS] Makespan for {0} = {1}",
-                    new Object[]{jsspInstancePath,String.valueOf(makespan)});
-
-
-            //============ Call GA ============
-            String queue = "jssp_ga";
-            String resultsQueue = queue + "_results";
-            CrossoverStrategies strategy = CrossoverStrategies.ONE;
-            Logger.getLogger(this.getClass().getName()).log(Level.INFO,
-                    "GA is running for {0}, check queue {1}",
-                    new Object[]{jsspInstancePath,resultsQueue});
-            GeneticAlgorithmJSSP ga = new GeneticAlgorithmJSSP(jsspInstancePath, queue, strategy);
-            ga.run();*/
-
-            //==========================================================================================================
-
-            /*this.factoryRI.register("jorge", "ufp");
-
-            SessionRI sessionRI = this.factoryRI.login("jorge", "ufp");
-
-            if (sessionRI != null)
-            {
-                //CRIAR JOB'S
-
-            }*/
-
             String username, pw;
             System.out.println("1 - Register and Login");
             System.out.println("2 - Login");
@@ -122,8 +92,6 @@ public class JobShopClientImpl implements JobShopClientRI{
                     menu();
                     break;
             }
-
-
 
             Logger.getLogger(this.getClass().getName()).log(Level.INFO, "going MAIL_TO_ADDR finish, GOODBYE. ;)");
 
@@ -227,7 +195,6 @@ public class JobShopClientImpl implements JobShopClientRI{
         }
     }
 
-    //Criar workers com thread.poll
     private void createWorkers(int workers, int jobId) throws IOException {
         //create workers com threads
 
@@ -236,9 +203,6 @@ public class JobShopClientImpl implements JobShopClientRI{
         ArrayList<WorkerRunnable> workersTh = new ArrayList<>();
 
         for (int i = 0; i < workers; i++) {
-            //WorkerImpl workerImpl = new WorkerImpl(workersSize + i, this.sessionRI.getUser().getUname(), this);
-            //this.sessionRI.associateWorkers(workerImpl, jobId);
-            //this.workerRI.add(workerImpl);
             WorkerRunnable wR = new WorkerRunnable(workersSize + i, this.sessionRI.getUser().getUname(), this.sessionRI, this);
             threadPool.execute(wR);
             this.sessionRI.associateWorkers(wR.workerRI, jobId);

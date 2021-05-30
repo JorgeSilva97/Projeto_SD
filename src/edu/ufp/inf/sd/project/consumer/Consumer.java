@@ -35,13 +35,9 @@ public class Consumer {
 
     /*+ name of the queue */
     public final static String QUEUE_NAME="jssp_ga";
-    public final static String QUEUE_JOB="jssp_job";
     ArrayList<Worker> workers = new ArrayList<>();
 
     public static void main(String[] argv) {
-
-        //Connection connection=null;
-        //Channel channel=null;
 
         /* Create a connection to the server (abstracts the socket connection,
            protocol version negotiation and authentication, etc.) */
@@ -61,72 +57,33 @@ public class Consumer {
             then we can publish a message to the queue; The message content is a
             byte array (can encode whatever we need). */
 
-            channel.queueDeclare(QUEUE_NAME, true, false, false, null);
-
-
-            //channel.queueDeclare(QUEUE_NAME + "_results", true,false, false, null);
-            //channel.queueBind(QUEUE_NAME + "_results", QUEUE_NAME, "");
-
-            String consExch = "consExch";
-            //channel.exchangeDeclare(consExch, BuiltinExchangeType.DIRECT);
-
-            //declarar outra queue para comunicação entre coordenador e servidor
-            //channelCoord.queueDeclare(QUEUE_JOB, false, false, false, null);
-            //channelCoord.exchangeDeclare(QUEUE_JOB, BuiltinExchangeType.DIRECT);
-
+            //Declaração da Queue
             //channel.queueDeclare(QUEUE_NAME, true, false, false, null);
 
-            //sendJobGroup(channel);
             menu(channel);
-
-            // Change strategy to CrossoverStrategies.TWO
-            //sendMessage(channel, connection.getId());
-            Thread.currentThread().sleep(2000);
-
-            /*DefaultConsumer client = new DefaultConsumer(channel){
-                @Override
-                public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
-                    String message= new String(body, "UTF-8");
-                    System.out.println(" [x] Received from Server['" + message + "']");
-
-                    //menu(channel, connection);
-                }
-            };
-            channel.basicConsume(QUEUE_NAME, true, client);*/
-
-            // Change strategy to CrossoverStrategies.THREE
-            //sendMessage(channel, String.valueOf(CrossoverStrategies.THREE.strategy));
-            //Thread.currentThread().sleep(2000);
-
-
-            //sendJobGroup(channelCoord);
 
             // Stop the GA
             //sendMessage(channel, "stop");
 
         } catch (IOException | TimeoutException | InterruptedException e) {
             Logger.getLogger(Consumer.class.getName()).log(Level.INFO, e.toString());
-        } /* The try-with-resources will close resources automatically in reverse order
-            finally {
-            try {
-                // Lastly, we close the channel and the connection
-                if (channel != null) { channel.close(); }
-                if (connection != null) { connection.close(); }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        } */
+        }
     }
 
     public static  void menu(Channel channel) throws IOException, InterruptedException {
         boolean session = true;
+
+        //Criação de uma sessão para o consumer aceder ao producer e criar uma routingKey
         Scanner myObj = new Scanner(System.in);
         System.out.println("Name");
         String name = myObj.nextLine();
-
         System.out.println("Password:");
         String pass = myObj.nextLine();
+
+        //Declaração de uma nova queue, com o seu nome. Onde vai receber mensagens do producer
         channel.queueDeclare(name, false, false, true, null);
+
+        //Bind do exchange do producer com o routingkey = name
         channel.queueBind(name, "producer", name);
 
         while(session) {
@@ -143,7 +100,7 @@ public class Consumer {
             String opt = myObj.nextLine();
 
             switch (opt) {
-                //CREATE TASK
+                //CREATE JOB
                 case "1":
                     sendJobGroup(channel, name, pass);
                     System.out.println("out of sendJob");
@@ -153,9 +110,7 @@ public class Consumer {
                 getmyJobs(channel, name, pass);
                 System.out.println("What Job do you want to start?");
                 opt = myObj.nextLine();
-
                 startJob(channel, name, pass, Integer.parseInt(opt));
-
                 break;
                 //LIST JobGroups
                 case "3":
@@ -165,82 +120,119 @@ public class Consumer {
             case "4":
                 System.out.println("How many workers do you want to make available?");
                 int workers = myObj.nextInt();
-                // Criar workers
+                //Recebe os jobs ativos para inserir workers
                 getJobs(channel, name, pass);
                 Thread.sleep(2000);
                 System.out.println("What Job do you want to join?");
                 int jobId = myObj.nextInt();
+                //envia pedido para o producer enviar id's disponiveis para criação
                 getiD(channel, name, jobId, workers);
-                //createWorkers(workers, jobId);
 
                 break;
             //DELETE TASK
-            /*case "5":
+            case "5":
                 System.out.print("Which Job do you want to delete? ");
-                if (!this.sessionRI.listJobGroups().isEmpty()) {
-                    System.out.println(this.sessionRI.listJobGroups());
-                }
+                getmyJobs(channel, name, pass);
                 jobId = myObj.nextInt();
-                this.sessionRI.removeJobGroup(this.sessionRI.getUser().getUname(), jobId);
+
+                /**
+                 *  Não implementado por falta de tempo, função identica ao create JobGroup
+                 **/
+
                 System.out.println("Job removed");
                 break;
             //PAUSE TASK
             case "6":
                 System.out.println("Which task do you want to pause? ");
-                if (!this.sessionRI.listJobGroups().isEmpty()) {
-                    System.out.println(this.sessionRI.listJobGroups());
-                }
+                getmyJobs(channel, name, pass);
                 jobId = myObj.nextInt();
-                this.sessionRI.changeJobGroupState(jobId, 2);
-                break;*/
+
+                /**
+                 * Não implementado por falta de tempo, função identica ao createJob e removeJob
+                 **/
+
+                break;
             //LOGOUT
             case "7":
                 session = false;
                 break;
             }
+            getProducerReply(channel, name);
+            Thread.sleep(2000);
         }
     }
 
+    /**
+     * Iniciar um jobGroup
+     * @param channel
+     * @param name nome do criador do Job
+     * @param pass
+     * @param jobiD iD do Job que se pretende dar start
+     * @throws IOException
+     */
     public static void startJob(Channel channel, String name, String pass, int jobiD) throws IOException {
-
+        //mensagem que vai ser enviada para o producer a informar o producer a começar um determinado job
         String message ="startjob;" + name + ";" + pass + ";" + jobiD;
 
         channel.basicPublish("", QUEUE_NAME,MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes("UTF-8"));
-
-        //System.out.println("getJobs");
     }
 
+    /**
+     * Pedido ao Producer para enviar os jobs ativos existentes
+     * @param channel
+     * @param name
+     * @param pass
+     * @throws IOException
+     */
     public static void getJobs(Channel channel, String name, String pass) throws IOException {
 
+        //mensagem enviada para o producer com a palavra "jobs" no inicio para identificar o pedido
         String message ="jobs;" + name + ";" + pass + ";";
-
         channel.basicPublish("", QUEUE_NAME,MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes("UTF-8"));
 
-        getProducerReply(channel, name);
-        //System.out.println("getJobs");
     }
 
+    /**
+     * Pedir ao producer para enviar os Jobs criados pelo consumer
+     * @param channel
+     * @param name
+     * @param pass
+     * @throws IOException
+     */
     public static void getmyJobs(Channel channel, String name, String pass) throws IOException {
-
         String message ="myjobs;" + name + ";" + pass + ";";
-
         channel.basicPublish("", QUEUE_NAME,MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes("UTF-8"));
 
-        getProducerReply(channel, name);
-        //System.out.println("getJobs");
     }
 
+    /**
+     * Recebe a resposta do producer quando o routingKey colocado pelo Producer é igual ao seu nome
+     * @param channel
+     * @param name
+     * @throws IOException
+     */
     private static void getProducerReply(Channel channel, String name) throws IOException {
 
         boolean run = true;
-        DeliverCallback deliverCallback=(consumerTag, delivery) -> {
-            String message=new String(delivery.getBody(), "UTF-8");
-            System.out.println(" [x] Received from Server\n'" + message + "'");
+        DeliverCallback deliverCallback = (consumerTag, delivery) -> {
+            String message = new String(delivery.getBody(), "UTF-8");
+            System.out.println(" [x]- Received from Server\n'" + message + "'");
+            String[] parameters = message.split("'");
 
-            while (!run){
+            System.out.println("parameters.lenght = " + parameters.length);
+            if (parameters.length > 1){
+                String[] ids = parameters[1].split(";");
+                if(ids[0].equals("ids")) {
+                    System.out.println("AQUI");
+
+                    createWorkers(channel, Integer.parseInt(ids[1]), ids);
+                }
+            }
+
+            while (!run) {
                 try {
                     long sleepMillis = 2000;
-                    Logger.getAnonymousLogger().log(Level.INFO, Thread.currentThread().getName()+": sleep " +sleepMillis);
+                    Logger.getAnonymousLogger().log(Level.INFO, Thread.currentThread().getName() + ": sleep " + sleepMillis);
                     Thread.currentThread().sleep(sleepMillis);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -249,23 +241,15 @@ public class Consumer {
         };
         channel.basicConsume(name, true, deliverCallback, consumerTag -> {
         });
-
-
-        /*final String[] reply = {null};
-        do{
-            DefaultConsumer client = new DefaultConsumer(channel) {
-                @Override
-                public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
-                    reply[0] = new String(body, "UTF-8");
-                    System.out.println(" [x] Received from Server'" + reply[0] + "'");
-                }
-            };
-            channel.basicConsume(name,true, client);
-            //System.out.println(reply[0]);
-        }while(reply[0] == null);*/
-        //System.out.println("here");
     }
 
+    /**
+     * Envia a criação de um novo JobGroup para o Producer guarda na base de dados
+     * @param channel
+     * @param name
+     * @param pass
+     * @throws IOException
+     */
     public static void sendJobGroup(Channel  channel, String name, String pass) throws IOException {
         Scanner myObj = new Scanner(System.in);
         System.out.println("Path to file");
@@ -274,71 +258,53 @@ public class Consumer {
         System.out.println("Credits: ");
         String credits = myObj.nextLine();
 
+        //mensagem enviada para o producer com os dados de criação do Job
         String message = path + ";" + credits + ";" + name + ";" + pass + ";";
 
         channel.basicPublish("",QUEUE_NAME, null, message.getBytes("UTF-8"));
         System.out.println(" [x] Sent new JobGroup'" + message + "'");
 
-        getProducerReply(channel, name);
     }
 
-    //Criar workers com thread.poll
-    private static void createWorkers(Channel channel, String name, int id, int jobId, String[] workers) throws IOException {
+    /**
+     * Criar workers com os id's recebidos do Producer
+     * @param channel
+     * @param jobId
+     * @param workers
+     * @throws IOException
+     */
+    private static void createWorkers(Channel channel, int jobId, String[] workers) throws IOException {
         //create workers com threads
 
-
-        ThreadPool threadPool = new ThreadPool(workers.length);
+        ThreadPool threadPool = new ThreadPool(workers.length - 2);
         ArrayList<WorkerRunnable> w = new ArrayList<>();
-        for(int i = Integer.parseInt(workers[0]); i <= Integer.parseInt(workers[workers.length - 1]); i++){
+        for(int i = Integer.parseInt(workers[2]); i <= Integer.parseInt(workers[workers.length - 1]); i++){
             WorkerRunnable wR = new WorkerRunnable(jobId, channel);
             wR.worker.setWorkerID(i);
             w.add(wR);
         }
-        for(int i = 0; i < workers.length; i++) {
-            threadPool.execute(w.get(i));
-        }
         System.out.println("Workers criados!\n");
 
-        //sentWorkerToProducer(wR.worker, channel, name);
+        //Inicialização das threads dos workers.
+        for(int i = 0; i < workers.length - 2; i++) {
+            threadPool.execute(w.get(i));
+        }
     }
 
-    private static void sentWorkerToProducer(Worker wr, Channel channel, String name) throws IOException {
-        String message = "worker;" + name + ";" + wr.getWorkerID() + ";" + wr.getJobiD();
-
-        channel.basicPublish("",QUEUE_NAME, null, message.getBytes("UTF-8"));
-
-        getProducerReply(channel, name);
-    }
-
+    /**
+     * Enviar pedido ao Producer de id's disponiveis para criação de workers
+     * @param channel
+     * @param name
+     * @param jobId
+     * @param workers
+     * @throws IOException
+     * @throws InterruptedException
+     */
     private static void getiD(Channel channel, String name, int jobId, int workers) throws IOException, InterruptedException {
 
         String message ="getiD;" + name + ";" + jobId + ";" + workers;
 
         channel.basicPublish("",QUEUE_NAME, null, message.getBytes("UTF-8"));
 
-        boolean run = true;
-
-        DefaultConsumer client = new DefaultConsumer(channel) {
-            @Override
-            public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException{
-                String message=new String(body, "UTF-8");
-                String[] parameters = message.split("'");
-                String[] ids = parameters[1].split(";");
-
-                System.out.println(" [x] Received from Server\n'" + message + "'");
-                createWorkers(channel, name, Integer.parseInt(parameters[1]), jobId, ids);
-
-                while (!run){
-                    try {
-                        long sleepMillis = 2000;
-                        Logger.getAnonymousLogger().log(Level.INFO, Thread.currentThread().getName()+": sleep " +sleepMillis);
-                        Thread.currentThread().sleep(sleepMillis);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        };
-        channel.basicConsume(name, true, client);
     }
 }

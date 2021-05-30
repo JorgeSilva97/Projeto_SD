@@ -26,7 +26,9 @@ public class WorkerRunnable implements Runnable{
         try{
             Worker worker = this.worker;
             Channel channel = this.worker.getChannel();
+            //Declaração de uma nova queue que vai ser usada pelo worker para receber informação do JobGroup associado
             channel.queueDeclare("worker_" + this.worker.getWorkerID(), false, false, false, null);
+            //Bind da sua queue para o exchange do JobGroup associado
             channel.queueBind("worker_" + this.worker.getWorkerID(), "JobGroup_" + this.worker.getJobiD(), "");
 
             boolean run = true;
@@ -37,18 +39,21 @@ public class WorkerRunnable implements Runnable{
                     String[] parameters = message.split(";");
                     Logger.getAnonymousLogger().log(Level.INFO, Thread.currentThread().getName()+": Message received " +message);
 
-                    if(parameters[0].equals("url")){
-                        System.out.println("url received!\n");
-                        worker.setPathToWork(parameters[1]);
+                    switch (parameters[0]) {
+                        case "url":
+                            System.out.println("url received!\n");
+                            worker.setPathToWork(parameters[1]);
 
-                    }else if(parameters[0].equals("start")){
-                        System.out.println("worker will start now!\n");
-                        worker.startWork();
+                            break;
+                        case "start":
+                            System.out.println("worker will start now!\n");
+                            worker.startWork();
 
-                    }else if(parameters[0].equals("stop")){
-                        System.out.println("worker will stop now!\n");
-                        //stopWork;
-
+                            break;
+                        case "stop":
+                            System.out.println("worker will stop now!\n");
+                            //stopWork;
+                            break;
                     }
                     while (!run){
                         try {

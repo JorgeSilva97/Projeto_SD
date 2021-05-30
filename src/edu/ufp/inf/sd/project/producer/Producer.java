@@ -33,17 +33,14 @@ package edu.ufp.inf.sd.project.producer;
 import com.rabbitmq.client.*;
 import edu.ufp.inf.sd.project.consumer.Consumer;
 import edu.ufp.inf.sd.project.consumer.Worker;
-import edu.ufp.inf.sd.project.server.User;
+import edu.ufp.inf.sd.project.server.*;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
 public class Producer {
-
-    //private final static String QUEUE_NAME = "helloqueue";
 
     public static void main(String[] argv) throws Exception {
         try {
@@ -57,61 +54,19 @@ public class Producer {
             factory.setUsername("guest");
             factory.setPassword("guest");
             //factory.setPassword("guest4rabbitmq");
-            String producerExch = "producer";
+
+            String Exchange = "producer";
 
             Connection connection=factory.newConnection();
             Channel channel=connection.createChannel();
-            channel.exchangeDeclare(producerExch, BuiltinExchangeType.DIRECT);
+
+            //Declaração de queues e do exchange do tipo Direct
+            channel.exchangeDeclare(Exchange, BuiltinExchangeType.DIRECT);
             channel.queueDeclare(Consumer.QUEUE_NAME, true, false, false, null);
             channel.queueDeclare("Workers_results", true, false, false, null);
 
-            String resultsQueue = Consumer.QUEUE_NAME + "_results";
-
-            //String coordenatorQueue = Producer.QUEUE_JOB + "_results";
-
-            //channel.queueDeclare(resultsQueue, true, false, false, null);
-
-
-            //channel.queueBind(Consumer.QUEUE_NAME + "_results", "consExch", "");
-            //channel.queueDeclare(Producer.QUEUE_NAME, false, false, false, null);
-            //channelCoord.queueDeclare(Producer.QUEUE_JOB, false, false, false, null);
-            //channelCoord.exchangeDeclare(coordenatorQueue, BuiltinExchangeType.DIRECT);
-
             System.out.println(" [*] Waiting for messages. To exit press CTRL+C");
 
-            /*boolean run = true;
-            DeliverCallback deliverCallback=(consumerTag, delivery) -> {
-                String message=new String(delivery.getBody(), "UTF-8");
-                String[] parameters = message.split(";");
-                Logger.getAnonymousLogger().log(Level.INFO, Thread.currentThread().getName()+": Message received " +message);
-
-                if(parameters[0].equals("jobs")){
-                    String reply = db.getJobgroupsString();
-                    String test = "hello";
-                    channel.queueDeclare(parameters[1], false, false, false, null);
-                    channel.basicPublish("producer", parameters[1], null, test.getBytes("UTF-8"));
-
-                }else{
-                    createJobGroup(db, channel, parameters);
-                }
-                System.out.println(db.getJobgroups());
-                while (!run){
-                    try {
-                        long sleepMillis = 2000;
-                        Logger.getAnonymousLogger().log(Level.INFO, Thread.currentThread().getName()+": sleep " +sleepMillis);
-                        Thread.currentThread().sleep(sleepMillis);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            };
-            Logger.getAnonymousLogger().log(Level.INFO, Thread.currentThread().getName()+": Register Deliver Callback...");
-            //Associate callback with channel queue
-            channel.basicConsume(Consumer.QUEUE_NAME, true, deliverCallback, consumerTag -> {
-            });*/
-
-             //The server pushes messages asynchronously, hence we provide a
-            //DefaultConsumer callback that will buffer the messages until we're ready to use them.
             boolean run = true;
             DefaultConsumer client = new DefaultConsumer(channel) {
                 @Override
@@ -122,27 +77,34 @@ public class Producer {
                     System.out.println(" [x] Received '" + message + "'");
                     System.out.println(parameters[0]);
 
-                    if(parameters[0].equals("jobs")){
-                        String reply = db.getJobgroupsString();
+                    switch (parameters[0]) {
+                        case "jobs":
+                            String reply = db.getJobgroupsString();
 
-                        //channel.queueDeclare(parameters[1], false, false, false, null);
-                        channel.basicPublish("producer", parameters[1], null, reply.getBytes("UTF-8"));
-                        System.out.println("message sent to: " + parameters[1]);
+                            //channel.queueDeclare(parameters[1], false, false, false, null);
+                            channel.basicPublish("producer", parameters[1], null, reply.getBytes("UTF-8"));
+                            System.out.println("message sent to: " + parameters[1]);
 
-                    }else if(parameters[0].equals("getiD")){
-                        saveWorker(db, channel, parameters);
+                            break;
+                        case "getiD":
+                            saveWorker(db, channel, parameters);
 
-                    }else if(parameters[0].equals("worker")){
-                        saveWorker(db, channel, parameters);
-                    }else if(parameters[0].equals("myjobs")){
-                        String reply = db.getmyJobs(parameters[1]);
+                            break;
+                        case "myjobs":
+                            reply = db.getmyJobs(parameters[1]);
 
-                        channel.basicPublish("producer", parameters[1], null, reply.getBytes("UTF-8"));
-                        System.out.println("message sent to: " + parameters[1]);
-                    }else if(parameters[0].equals("startjob")){
-                        db.getJobGroup(Integer.parseInt(parameters[3])).changeState(1, channel);
-                    }else{
-                        createJobGroup(db, channel, parameters);
+                            channel.basicPublish("producer", parameters[1], null, reply.getBytes("UTF-8"));
+                            System.out.println("message sent to: " + parameters[1]);
+
+                            break;
+                        case "startjob":
+                            db.getJobGroup(Integer.parseInt(parameters[3])).changeState(1, channel);
+
+                            break;
+                        default:
+                            createJobGroup(db, channel, parameters);
+
+                            break;
                     }
                     System.out.println(db.getJobgroups());
                     while (!run){
@@ -158,32 +120,43 @@ public class Producer {
             };
             channel.basicConsume(Consumer.QUEUE_NAME, true, client);
 
-            /*DeliverCallback deliverCallback = (consumerTag, delivery) -> {
-                String message = new String(delivery.getBody(), "UTF-8");
-                System.out.println(" [x] Received '" + message + "'");
-            };
-            channel.basicConsume(resultsQueue, true, deliverCallback, consumerTag -> { });*/
-
         } catch (Exception e){
             //Logger.getLogger(Recv.class.getName()).log(Level.INFO, e.toString());
             e.printStackTrace();
         }
     }
 
+    /**
+     * Guardar worker do consumer
+     * @param db
+     * @param channel
+     * @param parameters
+     * @throws IOException
+     */
     private static void saveWorker(DBMockup db, Channel channel, String[] parameters) throws IOException {
-       String ids = "";
-        for(int i = 1; i <= Integer.parseInt(parameters[3]); i++){
-           ids += (db.getWorkers().size() + i) + ";";
-            Worker worker = new Worker(Integer.parseInt(parameters[2]), channel);
-            worker.setWorkerID((db.getWorkers().size() + i));
+       String ids = "ids;" + parameters[2] + ";";
+       Worker worker = null;
+        for(int i = 0; i < Integer.parseInt(parameters[3]); i++){
+            System.out.println(db.getWorkers().size());
+            ids += (db.getWorkers().size()) + ";";
+            System.out.println(ids);
+            worker = new Worker(Integer.parseInt(parameters[2]), channel);
+            worker.setWorkerID((db.getWorkers().size()));
             db.addWorkers(Integer.parseInt(parameters[2]), worker);
         }
 
-        String reply = "Workers with id's: '" + ids + "' saved on Producer!";
+        String reply = "Workers with ids: '" + ids + "' saved on Producer!";
         System.out.println(reply);
         channel.basicPublish("producer", parameters[1], null, reply.getBytes("UTF-8"));
     }
 
+    /**
+     * Criar um JobGroup com os dados recebidos do Consumer criador
+     * @param db
+     * @param channel
+     * @param parameters parametros enviados pelo consumer
+     * @throws IOException
+     */
     private static void createJobGroup(DBMockup db, Channel channel, String[] parameters) throws IOException {
         User user = null;
         if(db.getUser(parameters[2]) == null){
