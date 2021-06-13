@@ -80,8 +80,6 @@ public class Producer {
                     switch (parameters[0]) {
                         case "jobs":
                             String reply = db.getJobgroupsString();
-
-                            //channel.queueDeclare(parameters[1], false, false, false, null);
                             channel.basicPublish("producer", parameters[1], null, reply.getBytes("UTF-8"));
                             System.out.println("message sent to: " + parameters[1]);
 
@@ -92,7 +90,6 @@ public class Producer {
                             break;
                         case "myjobs":
                             reply = db.getmyJobs(parameters[1]);
-
                             channel.basicPublish("producer", parameters[1], null, reply.getBytes("UTF-8"));
                             System.out.println("message sent to: " + parameters[1]);
 
@@ -119,6 +116,8 @@ public class Producer {
                 }
             };
             channel.basicConsume(Consumer.QUEUE_NAME, true, client);
+
+
 
         } catch (Exception e){
             //Logger.getLogger(Recv.class.getName()).log(Level.INFO, e.toString());

@@ -1,10 +1,8 @@
 package edu.ufp.inf.sd.project.server;
 
 import edu.ufp.inf.sd.project.client.JobShopClientRI;
-import edu.ufp.inf.sd.project.client.WorkerImpl;
 import edu.ufp.inf.sd.project.client.WorkerRI;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Serializable;
 import java.rmi.RemoteException;
@@ -75,27 +73,27 @@ public class SessionImpl extends UnicastRemoteObject implements SessionRI, Seria
         }
     }
 
-    public ArrayList<JobGroupRI> listmyJobGroups() throws RemoteException {
-        ArrayList<JobGroupRI> jobGroups = new ArrayList<>();
+    public StringBuilder listmyJobGroups() throws RemoteException {
+        StringBuilder jobgroupstring = new StringBuilder();
         for (int i = 0; i < jobShopFactoryImpl.getDb().getJobgroups().size(); i++) {
             JobGroupRI jobGroup = jobShopFactoryImpl.getDb().getJobgroups().get(i + 1);
             if (jobGroup.getUser().getUname().equals(this.user.getUname())) {
-                jobGroups.add(jobShopFactoryImpl.getDb().getJobgroups().get(i + 1));
+                jobgroupstring.append(jobShopFactoryImpl.getDb().getJobgroups().get(i + 1).toString()).append("\n");
             }
         }
-        return jobGroups;
+        return jobgroupstring;
     }
 
-    public ArrayList<JobGroupRI> listJobGroups() throws RemoteException {
-        ArrayList<JobGroupRI> jobGroups = new ArrayList<>();
+    public StringBuilder listJobGroups() throws RemoteException {
+        StringBuilder jobgroupstring = new StringBuilder();
         for (int i = 0; i < jobShopFactoryImpl.getDb().getJobgroups().size(); i++) {
-            jobGroups.add(jobShopFactoryImpl.getDb().getJobgroups().get(i + 1));
-            System.out.println(jobGroups);
+            jobgroupstring.append(jobShopFactoryImpl.getDb().getJobgroups().get(i + 1).toString()).append("\n");
         }
-        return jobGroups;
+        return jobgroupstring;
     }
 
     public void changeJobGroupState(int jobID, int state) throws IOException {
+        if(this.user.getUname().equals(this.jobShopFactoryImpl.getDb().getJobGroup(jobID).getUser().getUname()))
         this.jobShopFactoryImpl.getDb().getJobGroup(jobID).changeState(state);
     }
 

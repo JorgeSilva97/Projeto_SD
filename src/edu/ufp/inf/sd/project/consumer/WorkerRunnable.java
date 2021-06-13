@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class WorkerRunnable implements Runnable{
+public class WorkerRunnable implements Runnable {
 
     public Worker worker;
 
@@ -22,8 +22,8 @@ public class WorkerRunnable implements Runnable{
     }
 
     @Override
-    public void run(){
-        try{
+    public void run() {
+        try {
             Worker worker = this.worker;
             Channel channel = this.worker.getChannel();
             //Declaração de uma nova queue que vai ser usada pelo worker para receber informação do JobGroup associado
@@ -34,31 +34,28 @@ public class WorkerRunnable implements Runnable{
             boolean run = true;
             DefaultConsumer client = new DefaultConsumer(channel) {
                 @Override
-                public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException{
-                    String message=new String(body, "UTF-8");
+                public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+                    String message = new String(body, "UTF-8");
                     String[] parameters = message.split(";");
-                    Logger.getAnonymousLogger().log(Level.INFO, Thread.currentThread().getName()+": Message received " +message);
+                    Logger.getAnonymousLogger().log(Level.INFO, Thread.currentThread().getName() + ": Message received " + message);
 
                     switch (parameters[0]) {
                         case "url":
                             System.out.println("url received!\n");
                             worker.setPathToWork(parameters[1]);
-
-                            break;
-                        case "start":
-                            System.out.println("worker will start now!\n");
                             worker.startWork();
-
+                            worker.getResults();
                             break;
+
                         case "stop":
                             System.out.println("worker will stop now!\n");
                             //stopWork;
                             break;
                     }
-                    while (!run){
+                    while (!run) {
                         try {
                             long sleepMillis = 2000;
-                            Logger.getAnonymousLogger().log(Level.INFO, Thread.currentThread().getName()+": sleep " +sleepMillis);
+                            Logger.getAnonymousLogger().log(Level.INFO, Thread.currentThread().getName() + ": sleep " + sleepMillis);
                             Thread.currentThread().sleep(sleepMillis);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
@@ -70,5 +67,8 @@ public class WorkerRunnable implements Runnable{
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+
+
     }
 }

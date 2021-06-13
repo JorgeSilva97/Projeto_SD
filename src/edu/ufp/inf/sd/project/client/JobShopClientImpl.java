@@ -137,10 +137,11 @@ public class JobShopClientImpl implements JobShopClientRI{
                     break;
                 //Start JobGroup
                 case "2":
-                    printJobs();
+                    System.out.println(this.sessionRI.listmyJobGroups());
                     System.out.println("What Job do you want to start?");
                     opt2 = myObj.nextLine();
                     this.sessionRI.changeJobGroupState(Integer.parseInt(opt2),1);
+
                     break;
                 //LIST JobGroups
                 case "3":
@@ -152,21 +153,16 @@ public class JobShopClientImpl implements JobShopClientRI{
                     System.out.println("How many workers do you want to make available?");
                     int workers = myObj.nextInt();
                     // Criar workers
-                    for (JobGroupRI me : this.sessionRI.listJobGroups()) {
-                        System.out.println("Key: " + me.getJobId() + " & Value: " + me);
-                    }
+                    printJobs();
                     System.out.println("What Job do you want to join?");
                     int jobId = myObj.nextInt();
-
                     createWorkers(workers, jobId);
 
                     break;
                     //DELETE TASK
                 case "5":
                     System.out.print("Which Job do you want to delete? ");
-                    if(!this.sessionRI.listJobGroups().isEmpty()) {
-                        System.out.println(this.sessionRI.listJobGroups());
-                    }
+                    System.out.println(this.sessionRI.listmyJobGroups());
                     jobId = myObj.nextInt();
                     this.sessionRI.removeJobGroup(this.sessionRI.getUser().getUname(),jobId);
                     System.out.println("Job removed");
@@ -174,9 +170,7 @@ public class JobShopClientImpl implements JobShopClientRI{
                 //PAUSE TASK
                 case "6":
                     System.out.println("Which task do you want to pause? ");
-                    if(!this.sessionRI.listJobGroups().isEmpty()) {
-                        System.out.println(this.sessionRI.listJobGroups());
-                    }
+                    System.out.println(this.sessionRI.listmyJobGroups());
                     jobId = myObj.nextInt();
                     this.sessionRI.changeJobGroupState(jobId,2);
                     break;
@@ -190,9 +184,7 @@ public class JobShopClientImpl implements JobShopClientRI{
 
     private void printJobs() throws RemoteException {
         System.out.println("Jobs: ");
-        for (JobGroupRI me : this.sessionRI.listJobGroups()) {
-            System.out.println("Key: " + me.getJobId() + " & Value: " + me);
-        }
+        System.out.println(this.sessionRI.listJobGroups());
     }
 
     private void createWorkers(int workers, int jobId) throws IOException {

@@ -28,28 +28,12 @@ public class WorkerImpl implements WorkerRI {
 
     public void workTS(String path) throws RemoteException {
 
-        //if(jobGroup.getStrategy().equals("TS")) {
-            //============ Call TS remote service ============
-            //String path = jobGroup.getJobUrl();
-
             TabuSearchJSSP ts = new TabuSearchJSSP(path);
             int makespan = ts.run();
 
             Logger.getLogger(this.getClass().getName()).log(Level.INFO, "[TS] Makespan for {0} = {1}", new Object[]{path,String.valueOf(makespan)});
 
             this.jobGroups.saveResults(this.workerID, makespan);
-
-        //}else{
-            /*//============ Call GA ============
-            String queue = "jssp_ga";
-            String resultsQueue = queue + "_results";
-            CrossoverStrategies strategy = CrossoverStrategies.ONE;
-            Logger.getLogger(this.getClass().getName()).log(Level.INFO,
-                    "GA is running for {0}, check queue {1}",
-                    new Object[]{jsspInstancePath,resultsQueue});
-            GeneticAlgorithmJSSP ga = new GeneticAlgorithmJSSP(jsspInstancePath, queue, strategy);
-            ga.run();*/
-       // }
     }
 
     public void stopWorkers() throws RemoteException{

@@ -1,12 +1,9 @@
 package edu.ufp.inf.sd.project.server;
 
 import edu.ufp.inf.sd.project.client.JobShopClientRI;
-import edu.ufp.inf.sd.project.client.WorkerImpl;
 import edu.ufp.inf.sd.project.client.WorkerRI;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -19,8 +16,8 @@ public interface SessionRI extends Remote {
 
     public void removeJobGroup(String uname, int jobId) throws RemoteException;
 
-    public ArrayList<JobGroupRI> listmyJobGroups() throws RemoteException;
-    public ArrayList<JobGroupRI> listJobGroups() throws RemoteException;
+    public StringBuilder listmyJobGroups() throws RemoteException;
+    public StringBuilder listJobGroups() throws RemoteException;
 
     public User getUser() throws RemoteException;
 

@@ -34,7 +34,7 @@ import java.util.logging.Logger;
 public class Consumer {
 
     /*+ name of the queue */
-    public final static String QUEUE_NAME="jssp_ga";
+    public final static String QUEUE_NAME="consumer_queue";
     ArrayList<Worker> workers = new ArrayList<>();
 
     public static void main(String[] argv) {
@@ -81,7 +81,8 @@ public class Consumer {
         String pass = myObj.nextLine();
 
         //Declaração de uma nova queue, com o seu nome. Onde vai receber mensagens do producer
-        channel.queueDeclare(name, false, false, true, null);
+        channel.queueDeclare(name, false, false, false, null);
+        channel.queueDeclare(name + "_results", false, false, false, null);
 
         //Bind do exchange do producer com o routingkey = name
         channel.queueBind(name, "producer", name);
@@ -225,7 +226,7 @@ public class Consumer {
                 if(ids[0].equals("ids")) {
                     System.out.println("AQUI");
 
-                    createWorkers(channel, Integer.parseInt(ids[1]), ids);
+                    createWorkers(channel, Integer.parseInt(ids[1]), ids, name);
                 }
             }
 
@@ -273,7 +274,7 @@ public class Consumer {
      * @param workers
      * @throws IOException
      */
-    private static void createWorkers(Channel channel, int jobId, String[] workers) throws IOException {
+    private static void createWorkers(Channel channel, int jobId, String[] workers, String uname) throws IOException {
         //create workers com threads
 
         ThreadPool threadPool = new ThreadPool(workers.length - 2);
@@ -281,6 +282,7 @@ public class Consumer {
         for(int i = Integer.parseInt(workers[2]); i <= Integer.parseInt(workers[workers.length - 1]); i++){
             WorkerRunnable wR = new WorkerRunnable(jobId, channel);
             wR.worker.setWorkerID(i);
+            wR.worker.setUname(uname);
             w.add(wR);
         }
         System.out.println("Workers criados!\n");
