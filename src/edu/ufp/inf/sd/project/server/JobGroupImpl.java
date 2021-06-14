@@ -86,7 +86,6 @@ public class JobGroupImpl implements JobGroupRI, Serializable
             wRI.associateJobGroup(this);
             wRI.getPath(this.getJobUrl());
             wRI.getState("Worker adicionado com sucesso ao job ->" + this.getJobId() +  "!!!");
-
         }else{
             wRI.getState("Não foi possivel adicionar mais workers por falta de créditos");
             this.client.getState("JobGroup iD: " + this.jobId + " não tem mais espaço para workers!");
@@ -126,24 +125,12 @@ public class JobGroupImpl implements JobGroupRI, Serializable
         return jobUrl;
     }
 
-    public void setJobUrl(String jobUrl) {
-        this.jobUrl = jobUrl;
-    }
-
     public int getJobId() {
         return jobId;
     }
 
     public void setJobId(int jobId) {
         this.jobId = jobId;
-    }
-
-    public String getStrategy() {
-        return strategy;
-    }
-
-    public void setStrategy(String strategy) {
-        this.strategy = strategy;
     }
 
     public ArrayList<WorkerRI> getWorkerRI() {

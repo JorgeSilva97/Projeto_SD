@@ -28,8 +28,8 @@ export JAVAPROJ_NAME=SD
 export JAVAPROJ=/home/${USERNAME}/Desktop/${JAVAPROJ_NAME}
 
 export PACKAGE=project
-export PACKAGE_PREFIX=edu.ufp.inf.sd
-export PACKAGE_PREFIX_FOLDERS=edu/ufp/inf/sd
+export PACKAGE_PREFIX=edu.ufp.inf.sd.rmi
+export PACKAGE_PREFIX_FOLDERS=edu/ufp/inf/sd/rmi
 export SERVICE_NAME_ON_REGISTRY=JobShopService
 export CLIENT_CLASS_PREFIX=JobShop
 export SERVER_CLASS_PREFIX=JobShop

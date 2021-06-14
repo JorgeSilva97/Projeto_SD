@@ -38,6 +38,7 @@ public class Worker {
     }
 
     public void getResults() throws IOException {
+        System.out.println("Entrei no getResults\n\n");
         boolean run = true;
         DefaultConsumer client1 = new DefaultConsumer(channel) {
             @Override

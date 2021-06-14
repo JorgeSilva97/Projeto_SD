@@ -21,18 +21,6 @@ public class JobShopFactoryImpl extends UnicastRemoteObject implements JobShopFa
     }
 
     @Override
-    public int runTS(String jsspInstance) throws RemoteException
-    {
-
-        TabuSearchJSSP ts = new TabuSearchJSSP(jsspInstance);
-        int makespan = ts.run();
-
-        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "[TS] Makespan for {0} = {1}", new Object[]{jsspInstance,String.valueOf(makespan)});
-
-        return makespan;
-    }
-
-    @Override
     public boolean register(String uname, String pword) throws RemoteException
     {
         if (!db.exists(uname, pword))

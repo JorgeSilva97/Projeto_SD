@@ -43,8 +43,33 @@ public class WorkerRunnable implements Runnable {
                         case "url":
                             System.out.println("url received!\n");
                             worker.setPathToWork(parameters[1]);
+
+                            System.out.println("Entrei no getResults\n\n");
+                            boolean run = true;
+                            DefaultConsumer client1 = new DefaultConsumer(channel) {
+                                @Override
+                                public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+                                    String message = new String(body, "UTF-8");
+                                    String[] parameters = message.split(";");
+                                    Logger.getAnonymousLogger().log(Level.INFO, Thread.currentThread().getName() + ": Message received " + message);
+
+                                    System.out.println("Resultados: " + message + "\n");
+
+                                    while (!run) {
+                                        try {
+                                            long sleepMillis = 2000;
+                                            Logger.getAnonymousLogger().log(Level.INFO, Thread.currentThread().getName() + ": sleep " + sleepMillis);
+                                            Thread.currentThread().sleep(sleepMillis);
+                                        } catch (InterruptedException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                }
+                            };
+                            channel.basicConsume(worker.getUname() + "_results", true, client1);
+
+                            //worker.getResults();
                             worker.startWork();
-                            worker.getResults();
                             break;
 
                         case "stop":

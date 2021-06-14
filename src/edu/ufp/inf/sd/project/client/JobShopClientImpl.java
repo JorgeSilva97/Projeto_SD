@@ -192,7 +192,6 @@ public class JobShopClientImpl implements JobShopClientRI{
 
         int workersSize = this.sessionRI.getWorkersSize();
         ThreadPool threadPool = new ThreadPool(workers);
-        ArrayList<WorkerRunnable> workersTh = new ArrayList<>();
 
         for (int i = 0; i < workers; i++) {
             WorkerRunnable wR = new WorkerRunnable(workersSize + i, this.sessionRI.getUser().getUname(), this.sessionRI, this);
@@ -200,10 +199,6 @@ public class JobShopClientImpl implements JobShopClientRI{
             this.sessionRI.associateWorkers(wR.workerRI, jobId);
             this.workerRI.add(wR.workerRI);
         }
-    }
-
-    public void addWorker(WorkerRI workerRI) throws RemoteException{
-        this.workerRI.add(workerRI);
     }
 
     public void getState(String error) throws RemoteException{

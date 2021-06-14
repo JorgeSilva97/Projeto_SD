@@ -7,8 +7,7 @@ import java.rmi.RemoteException;
 
 
 public interface JobShopFactoryRI extends Remote {
-    int runTS(String jsspInstance) throws RemoteException;
-    public boolean register(String uname, String pword) throws RemoteException;
-    public SessionRI login(String uname, String pword) throws RemoteException;
-    public DBMockup getDb() throws RemoteException;
+     boolean register(String uname, String pword) throws RemoteException;
+     SessionRI login(String uname, String pword) throws RemoteException;
+     DBMockup getDb() throws RemoteException;
 }
