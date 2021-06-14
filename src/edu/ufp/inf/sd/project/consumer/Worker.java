@@ -7,6 +7,7 @@ import com.rabbitmq.client.Envelope;
 import edu.ufp.inf.sd.project.util.geneticalgorithm.CrossoverStrategies;
 import edu.ufp.inf.sd.project.util.geneticalgorithm.GeneticAlgorithmJSSP;
 
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -24,19 +25,6 @@ public class Worker {
         this.channel = channel;
     }
 
-    public void startWork() {
-       //============ Call GA ============
-        System.out.println("startwork()");
-            String queue = this.uname;
-            String resultsQueue = this.uname + "_results";
-            CrossoverStrategies strategy = CrossoverStrategies.ONE;
-            Logger.getLogger(this.getClass().getName()).log(Level.INFO,
-                    "GA is running for {0}, check queue {1}",
-                    new Object[]{this.pathToWork,resultsQueue});
-            GeneticAlgorithmJSSP ga = new GeneticAlgorithmJSSP(this.pathToWork, queue, strategy);
-            ga.run();
-    }
-
     public void getResults() throws IOException {
         System.out.println("Entrei no getResults\n\n");
         boolean run = true;
@@ -44,10 +32,14 @@ public class Worker {
             @Override
             public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
                 String message = new String(body, "UTF-8");
-                String[] parameters = message.split(";");
-                Logger.getAnonymousLogger().log(Level.INFO, Thread.currentThread().getName() + ": Message received " + message);
+                String[] parameters = message.split("=");
 
-                System.out.println("Resultados: " + message + "\n");
+                if (parameters.length > 1){
+                    System.out.println("Parameters[1] = " + parameters[1]);
+                    String msgToJob = "result;" + workerID + ";" + parameters[1];
+
+                    channel.basicPublish("",jobiD + "_results", null, msgToJob.getBytes("UTF-8"));
+                }
 
                 while (!run) {
                     try {
@@ -62,6 +54,18 @@ public class Worker {
         };
         channel.basicConsume(this.getUname() + "_results", true, client1);
     }
+
+    public void saveToFile(String file, String input){
+        try {
+            FileWriter writer = new FileWriter(file);
+            writer.write(input);
+            writer.close();
+            System.out.println("Successfully wrote to the file");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     public void setWorkerID(int workerID) {
         this.workerID = workerID;

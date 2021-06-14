@@ -63,7 +63,7 @@ public class Producer {
             //Declaração de queues e do exchange do tipo Direct
             channel.exchangeDeclare(Exchange, BuiltinExchangeType.DIRECT);
             channel.queueDeclare(Consumer.QUEUE_NAME, true, false, false, null);
-            channel.queueDeclare("Workers_results", true, false, false, null);
+            //channel.queueDeclare("Workers_results", true, false, false, null);
 
             System.out.println(" [*] Waiting for messages. To exit press CTRL+C");
 
@@ -96,6 +96,11 @@ public class Producer {
                             break;
                         case "startjob":
                             db.getJobGroup(Integer.parseInt(parameters[3])).changeState(1, channel);
+
+                            break;
+                        case "pausejob":
+                            db.getJobGroup(Integer.parseInt(parameters[3])).changeState(0, channel);
+
 
                             break;
                         default:

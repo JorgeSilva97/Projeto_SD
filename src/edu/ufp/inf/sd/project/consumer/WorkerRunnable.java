@@ -8,6 +8,7 @@ import edu.ufp.inf.sd.project.client.JobShopClientRI;
 import edu.ufp.inf.sd.project.client.WorkerImpl;
 import edu.ufp.inf.sd.project.client.WorkerRI;
 import edu.ufp.inf.sd.project.server.SessionRI;
+import edu.ufp.inf.sd.project.util.threading.ThreadPool;
 
 import java.io.IOException;
 import java.util.logging.Level;
@@ -30,6 +31,7 @@ public class WorkerRunnable implements Runnable {
             channel.queueDeclare("worker_" + this.worker.getWorkerID(), false, false, false, null);
             //Bind da sua queue para o exchange do JobGroup associado
             channel.queueBind("worker_" + this.worker.getWorkerID(), "JobGroup_" + this.worker.getJobiD(), "");
+            channel.queueBind("worker_" + this.worker.getWorkerID(), "JobGroup_" + this.worker.getJobiD(), String.valueOf(this.worker.getWorkerID()));
 
             boolean run = true;
             DefaultConsumer client = new DefaultConsumer(channel) {
@@ -39,42 +41,32 @@ public class WorkerRunnable implements Runnable {
                     String[] parameters = message.split(";");
                     Logger.getAnonymousLogger().log(Level.INFO, Thread.currentThread().getName() + ": Message received " + message);
 
+                    ThreadPool threadPool = new ThreadPool(1);
+                    GARunnable gaRunnable = null;
+
                     switch (parameters[0]) {
                         case "url":
                             System.out.println("url received!\n");
-                            worker.setPathToWork(parameters[1]);
+                            System.out.println(parameters[1]);
+                            String url = "/home/ricardo/Desktop/SD/src/edu/ufp/inf/sd/project/consumer/Files/" + "jobGroup_" + worker.getJobiD();
+                            worker.saveToFile(url, parameters[1]);
+                            //worker.setPathToWork(parameters[1]);
 
-                            System.out.println("Entrei no getResults\n\n");
-                            boolean run = true;
-                            DefaultConsumer client1 = new DefaultConsumer(channel) {
-                                @Override
-                                public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
-                                    String message = new String(body, "UTF-8");
-                                    String[] parameters = message.split(";");
-                                    Logger.getAnonymousLogger().log(Level.INFO, Thread.currentThread().getName() + ": Message received " + message);
+                            gaRunnable = new GARunnable(url, channel, worker);
+                            threadPool.execute(gaRunnable);
+                            worker.getResults();
 
-                                    System.out.println("Resultados: " + message + "\n");
-
-                                    while (!run) {
-                                        try {
-                                            long sleepMillis = 2000;
-                                            Logger.getAnonymousLogger().log(Level.INFO, Thread.currentThread().getName() + ": sleep " + sleepMillis);
-                                            Thread.currentThread().sleep(sleepMillis);
-                                        } catch (InterruptedException e) {
-                                            e.printStackTrace();
-                                        }
-                                    }
-                                }
-                            };
-                            channel.basicConsume(worker.getUname() + "_results", true, client1);
-
-                            //worker.getResults();
-                            worker.startWork();
                             break;
 
                         case "stop":
                             System.out.println("worker will stop now!\n");
+                            //Thread.currentThread().interrupt();
+                            threadPool.remove(gaRunnable);
                             //stopWork;
+                            break;
+
+                        case "credits":
+                            System.out.println("Credits received! -> " + parameters[1]);
                             break;
                     }
                     while (!run) {
