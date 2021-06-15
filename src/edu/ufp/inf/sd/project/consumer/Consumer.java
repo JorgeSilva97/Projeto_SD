@@ -57,8 +57,6 @@ public class Consumer {
             then we can publish a message to the queue; The message content is a
             byte array (can encode whatever we need). */
 
-            //Declaração da Queue
-            //channel.queueDeclare(QUEUE_NAME, true, false, false, null);
 
             menu(channel);
 
@@ -205,7 +203,6 @@ public class Consumer {
         //mensagem enviada para o producer com a palavra "jobs" no inicio para identificar o pedido
         String message = "jobs;" + name + ";" + pass + ";";
         channel.basicPublish("", QUEUE_NAME, MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes("UTF-8"));
-
     }
 
     /**
@@ -241,9 +238,8 @@ public class Consumer {
             if (parameters.length > 1) {
                 String[] ids = parameters[1].split(";");
                 if (ids[0].equals("ids")) {
-                    System.out.println("AQUI");
-
                     createWorkers(channel, Integer.parseInt(ids[1]), ids, name);
+
                 }
             }
 

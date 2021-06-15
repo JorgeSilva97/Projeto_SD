@@ -17,11 +17,11 @@ export NETBEANS=NetBeans
 export INTELLIJ=IntelliJ
 export CURRENT_IDE=${INTELLIJ}
 #export CURRENT_IDE=¢{NETBEANS}
-export USERNAME=ricardosimoes
+export USERNAME=ricardo
 
 #@REM ==== JAVA NAMING STUFF ====
 export JAVAPROJ_NAME=SD
-export JAVAPROJ=/Users/${USERNAME}/Documents/${JAVAPROJ_NAME}
+export JAVAPROJ=/home/${USERNAME}/Desktop/${JAVAPROJ_NAME}
 export RABBITMQ_SERVICES_FOLDER=edu/ufp/inf/sd
 export RABBITMQ_SERVICES_PACKAGE=edu.ufp.inf.sd
 export PACKAGE=project

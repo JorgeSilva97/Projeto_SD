@@ -31,7 +31,6 @@ public class WorkerRunnable implements Runnable {
             channel.queueDeclare("worker_" + this.worker.getWorkerID(), false, false, false, null);
             //Bind da sua queue para o exchange do JobGroup associado
             channel.queueBind("worker_" + this.worker.getWorkerID(), "JobGroup_" + this.worker.getJobiD(), "");
-            channel.queueBind("worker_" + this.worker.getWorkerID(), "JobGroup_" + this.worker.getJobiD(), String.valueOf(this.worker.getWorkerID()));
 
             boolean run = true;
             DefaultConsumer client = new DefaultConsumer(channel) {
@@ -46,8 +45,7 @@ public class WorkerRunnable implements Runnable {
 
                     switch (parameters[0]) {
                         case "url":
-                            System.out.println("url received!\n");
-                            System.out.println(parameters[1]);
+                            System.out.println("string received!\n");
                             String url = "/home/ricardo/Desktop/SD/src/edu/ufp/inf/sd/project/consumer/Files/" + "jobGroup_" + worker.getJobiD();
                             worker.saveToFile(url, parameters[1]);
                             //worker.setPathToWork(parameters[1]);

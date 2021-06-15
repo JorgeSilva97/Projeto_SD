@@ -76,7 +76,6 @@ public class JobGroup
             String[] param = n.split(" ");
             for(int i = 0; i < Integer.parseInt(param[0].trim()); i++) {
                 input += reader.readLine() + "\n";
-                System.out.println(input);
             }
             reader.close();
             String reply = "url;" + input;
